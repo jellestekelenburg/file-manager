@@ -40,10 +40,13 @@ const activeItemStyles = 'bg-accent';
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" class="w-56">
-                <DropdownMenuItem @click="emit('createFolder')">
+                <DropdownMenuItem class="mb-4">
+                    Create new folder
+                </DropdownMenuItem>
+                <DropdownMenuItem>
                     Upload New Folder
                 </DropdownMenuItem>
-                <DropdownMenuItem @click="emit('createFile')">
+                <DropdownMenuItem>
                     Upload File
                 </DropdownMenuItem>
             </DropdownMenuContent>
@@ -62,7 +65,7 @@ const activeItemStyles = 'bg-accent';
 
             <svg
                 v-if="item.svg"
-                class="size-5"
+                class="size-5 fill-gray-900 dark:fill-white"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 640 640"
             >
@@ -97,7 +100,7 @@ const activeItemStyles = 'bg-accent';
 
                         <svg
                             v-if="item.svg"
-                            class="mr-2 size-4"
+                            class="mr-2 size-4 fill-gray-900 dark:fill-white"
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 640 640"
                         >
@@ -119,10 +122,13 @@ const activeItemStyles = 'bg-accent';
                 <Button variant="outline" class="h-9">Create New</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" class="w-56">
-                <DropdownMenuItem @click="emit('createFolder')">
+                <DropdownMenuItem class="mb-4">
+                    Create new folder
+                </DropdownMenuItem>
+                <DropdownMenuItem>
                     Upload New Folder
                 </DropdownMenuItem>
-                <DropdownMenuItem @click="emit('createFile')">
+                <DropdownMenuItem>
                     Upload File
                 </DropdownMenuItem>
             </DropdownMenuContent>

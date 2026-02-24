@@ -49,14 +49,6 @@ function toggleSearch() {
     search.value = !search.value;
 }
 
-function createNewFolder() {
-    console.log('Create New Folder');
-}
-
-function createNewFile() {
-    console.log('Create New File');
-}
-
 const mainNavItems: NavItem[] = [
     {
         title: 'My Files',
@@ -84,7 +76,7 @@ const rightNavItems: NavItem[] = [];
 </script>
 
 <template>
-    <div class="bg-white">
+    <div class="bg-white dark:bg-gray-900">
         <div class="border-b border-sidebar-border/80">
             <div class="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
                 <!-- Mobile Menu -->
@@ -115,8 +107,6 @@ const rightNavItems: NavItem[] = [];
                                     <AppMainNav
                                         :items="mainNavItems"
                                         variant="mobile"
-                                        @create-folder="createNewFolder"
-                                        @create-file="createNewFile"
                                     />
                                 </div>
                                 <div class="flex flex-col space-y-4">
@@ -153,8 +143,6 @@ const rightNavItems: NavItem[] = [];
                     <AppMainNav
                         :items="mainNavItems"
                         variant="desktop"
-                        @create-folder="createNewFolder"
-                        @create-file="createNewFile"
                     />
                 </div>
 

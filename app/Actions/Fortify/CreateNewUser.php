@@ -25,20 +25,18 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-
-
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
         ]);
 
-
-        $file = New File();
+        $file = new File;
         $file->name = $input['email'];
         $file->is_folder = 1;
+        $file->created_by = $user->id;
+        $file->updated_by = $user->id;
         $file->makeRoot()->save();
-
 
         return $user;
     }
