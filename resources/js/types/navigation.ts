@@ -1,5 +1,6 @@
 import type { InertiaLinkProps } from '@inertiajs/vue3';
 import type { LucideIcon } from 'lucide-vue-next';
+import { FunctionalComponent } from 'vue';
 
 export type BreadcrumbItem = {
     title: string;
@@ -10,5 +11,6 @@ export type NavItem = {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon;
+    svg?: string;
     isActive?: boolean;
 };
