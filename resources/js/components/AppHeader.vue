@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -56,6 +57,14 @@ const activeItemStyles = 'bg-accent';
 const search = ref(false);
 function toggleSearch() {
     search.value = !search.value;
+}
+
+function createNewFolder() {
+    console.log('Create New Folder');
+}
+
+function createNewFile() {
+    console.log('Create New File');
 }
 
 const mainNavItems: NavItem[] = [
@@ -147,6 +156,31 @@ const rightNavItems: NavItem[] = [];
 
                                         {{ item.title }}
                                     </Link>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger :as-child="true">
+                                            <Button
+                                                variant="outline"
+                                                class="w-full justify-start"
+                                            >
+                                                Create New
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent
+                                            align="start"
+                                            class="w-56"
+                                        >
+                                            <DropdownMenuItem
+                                                @click="createNewFolder"
+                                            >
+                                                Upload New Folder
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                @click="createNewFile"
+                                            >
+                                                Upload File
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </nav>
                                 <div class="flex flex-col space-y-4">
                                     <a
@@ -157,11 +191,14 @@ const rightNavItems: NavItem[] = [];
                                         rel="noopener noreferrer"
                                         class="flex items-center space-x-2 text-sm font-medium"
                                     >
+
                                         <component
                                             v-if="item.icon"
                                             :is="item.icon"
                                             class="h-5 w-5"
                                         />
+
+
                                         <span>{{ item.title }}</span>
                                     </a>
                                 </div>
@@ -196,11 +233,22 @@ const rightNavItems: NavItem[] = [];
                                     ]"
                                     :href="item.href"
                                 >
+
                                     <component
                                         v-if="item.icon"
                                         :is="item.icon"
-                                        class="mr-2 h-4 w-4"
+                                        class="mr-2 size-4"
                                     />
+
+                                    <svg
+                                        class="size-4 mr-2"
+                                        v-if="item.svg"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 640 640"
+                                    >
+                                        <path :d="item.svg" />
+                                    </svg>
+
                                     {{ item.title }}
                                 </Link>
                                 <div

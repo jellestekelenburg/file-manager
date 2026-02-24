@@ -1,10 +1,17 @@
 <script setup lang="ts">
 
+import { useForm } from '@inertiajs/vue3';
+
 type Props = {
     search: boolean
 }
-
 defineProps<Props>();
+
+
+const form = useForm({
+    search: ''
+})
+
 </script>
 
 <template>
@@ -15,7 +22,8 @@ defineProps<Props>();
     >
         <input
             type="search"
-            placeholder="Search for files"
+            v-model="form.search"
+            placeholder="Search for files and folders"
             class="text-900 bg-gray-50 border border-gray-300 px-4 py-2.5"
         />
     </form>
