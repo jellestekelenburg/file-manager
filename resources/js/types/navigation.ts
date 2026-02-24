@@ -1,6 +1,5 @@
 import type { InertiaLinkProps } from '@inertiajs/vue3';
 import type { LucideIcon } from 'lucide-vue-next';
-import { FunctionalComponent } from 'vue';
 
 export type BreadcrumbItem = {
     title: string;
