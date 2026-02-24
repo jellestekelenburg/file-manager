@@ -4,6 +4,7 @@ import { LayoutGrid, Menu, Search } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import AppMainNav from '@/components/AppMainNav.vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import SearchForm from '@/components/SearchForm.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,15 +12,8 @@ import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    NavigationMenu,
-    NavigationMenuItem,
-    NavigationMenuList,
-    navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
 import {
     Sheet,
     SheetContent,
@@ -34,10 +28,9 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
-import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
 import { toUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { dashboard, myFiles } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -50,9 +43,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const page = usePage();
 const auth = computed(() => page.props.auth);
-const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
-
-const activeItemStyles = 'bg-accent';
 
 const search = ref(false);
 function toggleSearch() {
@@ -69,13 +59,8 @@ function createNewFile() {
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
         title: 'My Files',
-        href: '/',
+        href: myFiles(),
         svg: 'M128 464L512 464C520.8 464 528 456.8 528 448L528 208C528 199.2 520.8 192 512 192L362.7 192C345.4 192 328.5 186.4 314.7 176L276.3 147.2C273.5 145.1 270.2 144 266.7 144L128 144C119.2 144 112 151.2 112 160L112 448C112 456.8 119.2 464 128 464zM512 512L128 512C92.7 512 64 483.3 64 448L64 160C64 124.7 92.7 96 128 96L266.7 96C280.5 96 294 100.5 305.1 108.8L343.5 137.6C349 141.8 355.8 144 362.7 144L512 144C547.3 144 576 172.7 576 208L576 448C576 483.3 547.3 512 512 512z',
     },
     {
@@ -126,62 +111,14 @@ const rightNavItems: NavItem[] = [];
                             <div
                                 class="flex h-full flex-1 flex-col justify-between space-y-4 py-6"
                             >
-                                <nav class="-mx-3 space-y-1">
-                                    <Link
-                                        v-for="item in mainNavItems"
-                                        :key="item.title"
-                                        :href="item.href"
-                                        class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
-                                        :class="
-                                            whenCurrentUrl(
-                                                item.href,
-                                                activeItemStyles,
-                                            )
-                                        "
-                                    >
-                                        <component
-                                            v-if="item.icon"
-                                            :is="item.icon"
-                                            class="size-5"
-                                        />
-
-                                        <svg
-                                            class="size-5"
-                                            v-if="item.svg"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 640 640"
-                                        >
-                                            <path :d="item.svg" />
-                                        </svg>
-
-                                        {{ item.title }}
-                                    </Link>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger :as-child="true">
-                                            <Button
-                                                variant="outline"
-                                                class="w-full justify-start"
-                                            >
-                                                Create New
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent
-                                            align="start"
-                                            class="w-56"
-                                        >
-                                            <DropdownMenuItem
-                                                @click="createNewFolder"
-                                            >
-                                                Upload New Folder
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                @click="createNewFile"
-                                            >
-                                                Upload File
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </nav>
+                                <div class="space-y-1">
+                                    <AppMainNav
+                                        :items="mainNavItems"
+                                        variant="mobile"
+                                        @create-folder="createNewFolder"
+                                        @create-file="createNewFile"
+                                    />
+                                </div>
                                 <div class="flex flex-col space-y-4">
                                     <a
                                         v-for="item in rightNavItems"
@@ -207,57 +144,18 @@ const rightNavItems: NavItem[] = [];
                     </Sheet>
                 </div>
 
-                <Link :href="dashboard()" class="flex items-center gap-x-2">
+                <Link :href="myFiles()" class="flex items-center gap-x-2">
                     <AppLogo />
                 </Link>
 
                 <!-- Desktop Menu -->
                 <div class="hidden h-full lg:flex lg:flex-1">
-                    <NavigationMenu class="ml-10 flex h-full items-stretch">
-                        <NavigationMenuList
-                            class="flex h-full items-stretch space-x-2"
-                        >
-                            <NavigationMenuItem
-                                v-for="(item, index) in mainNavItems"
-                                :key="index"
-                                class="relative flex h-full items-center"
-                            >
-                                <Link
-                                    :class="[
-                                        navigationMenuTriggerStyle(),
-                                        whenCurrentUrl(
-                                            item.href,
-                                            activeItemStyles,
-                                        ),
-                                        'h-9 cursor-pointer px-3',
-                                    ]"
-                                    :href="item.href"
-                                >
-
-                                    <component
-                                        v-if="item.icon"
-                                        :is="item.icon"
-                                        class="mr-2 size-4"
-                                    />
-
-                                    <svg
-                                        class="size-4 mr-2"
-                                        v-if="item.svg"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 640 640"
-                                    >
-                                        <path :d="item.svg" />
-                                    </svg>
-
-                                    {{ item.title }}
-                                </Link>
-                                <div
-                                    v-if="isCurrentUrl(item.href)"
-                                    class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"
-                                ></div>
-                            </NavigationMenuItem>
-                        </NavigationMenuList>
-                    </NavigationMenu>
+                    <AppMainNav
+                        :items="mainNavItems"
+                        variant="desktop"
+                        @create-folder="createNewFolder"
+                        @create-file="createNewFile"
+                    />
                 </div>
 
                 <div class="ml-auto flex items-center space-x-2">

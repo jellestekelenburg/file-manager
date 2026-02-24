@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -9,6 +10,11 @@ Route::get('/', function () {
         'canRegister' => Features::enabled(Features::registration()),
     ]);
 })->name('home');
+
+Route::controller(FileController::class)
+    ->middleware(['auth', 'verified'])->group(function () {
+        Route::get('/my-files', 'myFiles')->name('myFiles');
+    });
 
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
