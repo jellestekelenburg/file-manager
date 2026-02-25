@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { ref } from 'vue';
+import CreateFolderModal from '@/components/app/CreateFolderModal.vue';
+import CreateNewDropdown from '@/components/app/CreateNewDropdown.vue';
 import {
     NavigationMenu,
     NavigationMenuItem,
@@ -22,35 +18,22 @@ type Props = {
 };
 
 const props = defineProps<Props>();
-const emit = defineEmits<{
-    createFolder: [];
-    createFile: [];
-}>();
+
 const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
 
 const activeItemStyles = 'bg-accent';
+
+const createFolderModal = ref(false);
+
+function showCreateFolderModal() {
+    createFolderModal.value = true;
+}
 </script>
 
 <template>
+    <CreateFolderModal v-model="createFolderModal" />
     <nav v-if="props.variant === 'mobile'" class="-mx-3 space-y-1">
-        <DropdownMenu>
-            <DropdownMenuTrigger :as-child="true">
-                <Button variant="outline" class="mt-1 w-full justify-start">
-                    Create New
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" class="w-56">
-                <DropdownMenuItem class="mb-4">
-                    Create new folder
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                    Upload New Folder
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                    Upload File
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <CreateNewDropdown button-class="mt-1 w-full justify-start" @create-folder="showCreateFolderModal" />
 
         <div class="mb-4"></div>
 
@@ -117,21 +100,6 @@ const activeItemStyles = 'bg-accent';
             </NavigationMenuList>
         </NavigationMenu>
 
-        <DropdownMenu>
-            <DropdownMenuTrigger :as-child="true">
-                <Button variant="outline" class="h-9">Create New</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" class="w-56">
-                <DropdownMenuItem class="mb-4">
-                    Create new folder
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                    Upload New Folder
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                    Upload File
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <CreateNewDropdown button-class="h-9" @create-folder="showCreateFolderModal" />
     </div>
 </template>
