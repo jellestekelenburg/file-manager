@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue';
+import FileUploadMenuItem from '@/components/app/FileUploadMenuItem.vue';
+import FolderUploadMenuItem from '@/components/app/FolderUploadMenuItem.vue';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -7,8 +9,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import FileUploadMenuItem from '@/components/app/FileUploadMenuItem.vue';
-import FolderUploadMenuItem from '@/components/app/FolderUploadMenuItem.vue';
 
 const props = withDefaults(
     defineProps<{
