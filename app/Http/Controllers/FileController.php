@@ -3,18 +3,41 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreFolderRequest;
+use App\Http\Resources\FileResource;
 use App\Models\File;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class FileController extends Controller
 {
-    public function myFiles()
+    public function myFiles(?string $folder = null)
     {
-        return Inertia::render('MyFiles');
+        if ($folder) {
+            $folder = File::query()
+                ->where('created_by', Auth::id())
+                ->where('path', $folder)
+                ->firstOrFail();
+        } else {
+            $folder = $this->getRoot();
+        }
+        $files = File::query()
+            ->where('parent_id', $folder->id)
+            ->where('created_by', Auth::id())
+            ->orderBy('is_folder', 'desc')
+            ->orderBy('files.created_at', 'desc')
+            ->paginate(10);
+
+        $files = FileResource::collection($files);
+
+        $ancestors = FileResource::collection([...$folder->ancestors, $folder]);
+
+        $folder = new FileResource($folder);
+
+        return Inertia::render('MyFiles', compact('files', 'folder', 'ancestors'));
     }
 
-    public function createFolder(StoreFolderRequest $request): void
+    public function createFolder(StoreFolderRequest $request): RedirectResponse
     {
         $data = $request->validated();
         $parent = $request->parent;
@@ -28,6 +51,8 @@ class FileController extends Controller
         $file->name = $data['name'];
 
         $parent->appendNode($file);
+
+        return redirect()->back();
     }
 
     private function getRoot()

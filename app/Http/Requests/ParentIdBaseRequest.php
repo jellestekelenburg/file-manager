@@ -35,6 +35,7 @@ class ParentIdBaseRequest extends FormRequest
     {
         return [
             'parent_id' => [
+                'nullable',
                 Rule::exists('files', 'id')->where(function (Builder $query) {
                     return $query
                         ->where('is_folder', true)

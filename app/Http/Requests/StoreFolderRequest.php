@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\File;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class StoreFolderRequest extends ParentIdBaseRequest
@@ -18,14 +19,20 @@ class StoreFolderRequest extends ParentIdBaseRequest
      */
     public function rules(): array
     {
+        $parentId = $this->parent?->id
+            ?? File::query()
+                ->where('created_by', Auth::id())
+                ->whereIsRoot()
+                ->value('id');
+
         return array_merge(parent::rules(),
             [
                 'name' => [
                     'required',
                     'string',
                     Rule::unique(File::class, 'name')
-                        ->where('created_by', auth()->id())
-                        ->where('parent_id', $this->parent_id)
+                        ->where('created_by', Auth::id())
+                        ->where('parent_id', $parentId)
                         ->whereNull('deleted_at'),
                 ],
             ]
@@ -35,7 +42,7 @@ class StoreFolderRequest extends ParentIdBaseRequest
     public function messages(): array
     {
         return [
-            'name.unique' => 'Folder name already exists',
+            'name.unique' => 'Name already exists in this folder',
         ];
     }
 }

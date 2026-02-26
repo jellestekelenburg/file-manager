@@ -1,9 +1,17 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
+import { router, useForm, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
-import Modal from '@/components/Modal.vue';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import folder from '@/routes/folder';
 
 const props = defineProps<{
     modelValue: boolean;
@@ -15,8 +23,32 @@ const emit = defineEmits<{
 
 const form = useForm({
     name: '',
+    parent_id: null as number | null,
 });
-function createFolder() {}
+const page = usePage();
+
+const currentFolderId = computed<number | null>(() => {
+    const folder = page.props.folder as
+        | { id?: number; data?: { id?: number } }
+        | undefined;
+
+    return folder?.id ?? folder?.data?.id ?? null;
+});
+
+function createFolder() {
+    form.parent_id = currentFolderId.value;
+    form.post(folder.create(), {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeModal();
+            form.reset();
+            router.reload({
+                only: ['files', 'folder', 'ancestors'],
+                preserveScroll: true,
+            });
+        },
+    });
+}
 function closeModal() {
     emit('update:modelValue', false);
     form.clearErrors();
@@ -25,16 +57,22 @@ function closeModal() {
 </script>
 
 <template>
-    <Modal :show="props.modelValue" @close="emit('update:modelValue', false)">
-        <div class="p-6">
-            <h2 class="text-lg font-medium text-gray-900">Create New Folder</h2>
+    <Dialog
+        :open="props.modelValue"
+        @update:open="emit('update:modelValue', $event)"
+    >
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Create New Folder</DialogTitle>
+            </DialogHeader>
 
-            <div class="mt-6">
+            <div class="mt-2">
                 <label for="folderName"></label>
                 <Input
-                    type="text"
                     id="folderName"
                     v-model="form.name"
+                    type="text"
+                    autofocus
                     class="mt-1 block w-full"
                     :class="
                         form.errors.name
@@ -45,13 +83,20 @@ function closeModal() {
                     @keyup.enter="createFolder"
                 />
                 <InputError :message="form.errors.name" class="mt-2" />
-
-                <div class="flex justify-end">
-                    <Button @click="closeModal" :variant="'secondary'" class="ms-auto mt-3">
-                        Close
-                    </Button>
-                </div>
             </div>
-        </div>
-    </Modal>
+
+            <DialogFooter>
+                <Button
+                    @click="createFolder"
+                    :variant="'default'"
+                    :disabled="form.processing"
+                    :class="{ 'opacity-25': form.processing }"
+                    >Submit</Button
+                >
+                <Button @click="closeModal" :variant="'secondary'">
+                    Close
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>
