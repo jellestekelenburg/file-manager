@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import type * as events from 'node:events';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import { SidebarInset } from '@/components/ui/sidebar';
 import { emitter, FILE_UPLOAD_STARTED } from '@/composables/event-bus';
+import file from '@/routes/file';
 
 type Props = {
     variant?: 'header' | 'sidebar';
@@ -9,6 +12,18 @@ type Props = {
 };
 
 const dragOver = ref(false);
+const page = usePage();
+const fileUploadForm = useForm({
+    files: [],
+    parent_id: null as number | null,
+});
+const currentFolderId = computed<number | null>(() => {
+    const folder = page.props.folder as
+        | { id?: number; data?: { id?: number } }
+        | undefined;
+
+    return folder?.id ?? folder?.data?.id ?? null;
+});
 
 const props = defineProps<Props>();
 const className = computed(() => props.class);
@@ -19,7 +34,7 @@ function onDragOver() {
 function onDragLeave() {
     dragOver.value = false;
 }
-function handleDrop(ev) {
+function handleDrop(ev: events) {
     dragOver.value = false;
     const files = ev.dataTransfer.files;
 
@@ -30,8 +45,11 @@ function handleDrop(ev) {
     uploadFiles(files)
 }
 
-function uploadFiles(files) {
-    console.log(files)
+function uploadFiles(files: any) {
+    fileUploadForm.parent_id = currentFolderId.value;
+    fileUploadForm.files = files;
+
+    fileUploadForm.post(file.store().url);
 }
 
 onMounted(() => {

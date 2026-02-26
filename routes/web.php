@@ -17,8 +17,9 @@ Route::controller(FileController::class)
             ->where('folder', '(.*)')
             ->name('myFiles');
         Route::post('/folder/create', 'createFolder')->name('folder.create');
-        // folder upload
         // file upload
+        Route::post('/file', 'store')->name('file.store');
+        // folder upload
     });
 
 Route::get('dashboard', function () {
