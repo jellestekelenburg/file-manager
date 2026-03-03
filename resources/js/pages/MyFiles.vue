@@ -91,7 +91,7 @@ function openFolder(file: FileListItem): void {
                 </li>
             </ol>
         </nav>
-        <table class="min-w-full">
+        <table class="min-w-full mt-5 rounded-2xl overflow-hidden">
             <thead class="border-b bg-gray-100 dark:bg-gray-700">
                 <tr>
                     <th
@@ -121,7 +121,7 @@ function openFolder(file: FileListItem): void {
                     v-for="file of props.files.data"
                     :key="file.id"
                     @dblclick="openFolder(file)"
-                    class="cursor-pointer border-b dark:border-b-gray-600 bg-white dark:bg-gray-800 transition duration-300 ease-in-out hover:bg-gray-100"
+                    class="cursor-pointer dark:border-b-gray-600 bg-white dark:bg-gray-800 transition duration-300 ease-in-out hover:bg-gray-100 not-last:border-b"
                 >
                     <td
                         class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
