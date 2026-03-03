@@ -42,7 +42,7 @@ function openFolder(file: FileListItem): void {
 <template>
     <Head title="Dashboard" />
     <AppLayout>
-        <nav class="mb-3 flex items-center justify-between p-1 mt-2">
+        <nav class="mt-2 mb-3 flex items-center justify-between p-1">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
                 <li
                     v-for="ans of props.ancestors.data"
@@ -83,7 +83,7 @@ function openFolder(file: FileListItem): void {
                                     ? myFiles({ folder: ans.path })
                                     : myFiles()
                             "
-                            class="ml-1 text-sm cursor-pointer font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
+                            class="ml-1 cursor-pointer text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
                         >
                             {{ ans.name }}
                         </Link>
@@ -92,27 +92,27 @@ function openFolder(file: FileListItem): void {
             </ol>
         </nav>
         <table class="min-w-full">
-            <thead class="border-b bg-gray-100">
+            <thead class="border-b bg-gray-100 dark:bg-gray-700">
                 <tr>
                     <th
-                        class="px-6 py-4 text-start text-sm font-medium text-gray-900"
+                        class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
                     >
                         Name
                     </th>
                     <th
-                        class="px-6 py-4 text-start text-sm font-medium text-gray-900"
+                        class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
                     >
                         Owner
                     </th>
                     <th
-                        class="px-6 py-4 text-start text-sm font-medium text-gray-900"
+                        class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
                     >
                         Last modified
                     </th>
                     <th
-                        class="px-6 py-4 text-start text-sm font-medium text-gray-900"
+                        class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
                     >
-                        File Size
+                        Size
                     </th>
                 </tr>
             </thead>
@@ -121,25 +121,25 @@ function openFolder(file: FileListItem): void {
                     v-for="file of props.files.data"
                     :key="file.id"
                     @dblclick="openFolder(file)"
-                    class="cursor-pointer border-b bg-white transition duration-300 ease-in-out hover:bg-gray-100"
+                    class="cursor-pointer border-b dark:border-b-gray-600 bg-white dark:bg-gray-800 transition duration-300 ease-in-out hover:bg-gray-100"
                 >
                     <td
-                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900"
+                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
                     >
                         {{ file.name }}
                     </td>
                     <td
-                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900"
+                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
                     >
                         {{ file.owner }}
                     </td>
                     <td
-                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900"
+                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
                     >
                         {{ file.updated_at }}
                     </td>
                     <td
-                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900"
+                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
                     >
                         {{ file.size }}
                     </td>

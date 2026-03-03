@@ -7,6 +7,7 @@ use App\Http\Requests\StoreFolderRequest;
 use App\Http\Resources\FileResource;
 use App\Models\File;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -43,7 +44,7 @@ class FileController extends Controller
         $data = $request->validated();
         $parent = $request->parent;
 
-        if (!$parent) {
+        if (! $parent) {
             $parent = $this->getRoot();
         }
 
@@ -59,12 +60,58 @@ class FileController extends Controller
     public function store(StoreFileRequest $request)
     {
         $data = $request->validated();
+        $parent = $request->parent;
+        $user = $request->user();
+        $fileTree = $request->file_tree;
 
-        dd($data);
+        if (! $parent) {
+            $parent = $this->getRoot();
+        }
+
+        if (! empty($fileTree)) {
+            $this->saveFileTree($fileTree, $parent, $user);
+        } else {
+            foreach ($data['files'] as $file) {
+                $this->saveFile($file, $user, $parent);
+            }
+        }
     }
 
     private function getRoot()
     {
         return File::query()->where('created_by', Auth::id())->whereIsRoot()->firstOrFail();
+    }
+
+    public function saveFileTree($fileTree, $parent, $user)
+    {
+        foreach ($fileTree as $name => $file) {
+            if (is_array($file)) {
+
+                $folder = new File;
+                $folder->is_folder = true;
+                $folder->name = $name;
+
+                $parent->appendNode($folder);
+                $this->saveFileTree($file, $folder, $user);
+            } else {
+                $this->saveFile($file, $user, $parent);
+            }
+        }
+
+    }
+
+    private function saveFile($file, $user, $parent): void
+    {
+        /* @var UploadedFile $file */
+        $path = $file->store('/files'.$user->id);
+
+        $model = new File;
+        $model->is_folder = false;
+        $model->storage_path = $path;
+        $model->name = $file->getClientOriginalName();
+        $model->mime = $file->getClientMimeType();
+        $model->size = $file->getSize();
+
+        $parent->appendNode($model);
     }
 }

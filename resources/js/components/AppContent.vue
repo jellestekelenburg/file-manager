@@ -13,9 +13,14 @@ type Props = {
 
 const dragOver = ref(false);
 const page = usePage();
-const fileUploadForm = useForm({
+const fileUploadForm = useForm<{
+    files: File[];
+    relative_paths: string[];
+    parent_id: number | null;
+}>({
     files: [],
-    parent_id: null as number | null,
+    relative_paths: [],
+    parent_id: null,
 });
 const currentFolderId = computed<number | null>(() => {
     const folder = page.props.folder as
@@ -39,15 +44,16 @@ function handleDrop(ev: events) {
     const files = ev.dataTransfer.files;
 
     if (!files.length) {
-        return
+        return;
     }
 
-    uploadFiles(files)
+    uploadFiles(files);
 }
 
 function uploadFiles(files: any) {
     fileUploadForm.parent_id = currentFolderId.value;
     fileUploadForm.files = files;
+    fileUploadForm.relative_paths = [...files].map((f) => f.webkitRelativePath);
 
     fileUploadForm.post(file.store().url);
 }
@@ -71,7 +77,9 @@ onMounted(() => {
     >
         <template v-if="dragOver">
             <div class="flex w-full items-center justify-center">
-                <div class="border-2 border-dotted border-gray-300 lg:p-16 p-12 rounded-xl text-gray-700">
+                <div
+                    class="rounded-xl border-2 border-dotted border-gray-300 p-12 text-gray-700 lg:p-16"
+                >
                     Drop Files here to upload
                 </div>
             </div>

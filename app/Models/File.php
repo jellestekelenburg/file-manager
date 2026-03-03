@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Kalnoy\Nestedset\NodeTrait;
 
 class File extends Model
@@ -41,6 +41,20 @@ class File extends Model
     public function isRoot()
     {
         return $this->parent_id == null;
+    }
+
+    public function getFileSize()
+    {
+        $NUM = 1024; // divider to B > KB > MB > GB
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+        if ($this->size < 1) {
+            return '-';
+        }
+
+        $power = $this->size > 0 ? floor(log($this->size, $NUM)) : 0;
+
+        return number_format($this->size / pow($NUM, $power), 2).$units[$power];
     }
 
     public function isOwnedBy($userId): bool

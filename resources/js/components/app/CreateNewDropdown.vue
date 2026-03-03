@@ -44,11 +44,14 @@ function handleCreateFolderSelect(event: Event) {
             </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" class="w-56">
-            <DropdownMenuItem class="mb-4" @select="handleCreateFolderSelect">
+            <DropdownMenuItem @select="handleCreateFolderSelect">
                 Create new folder
             </DropdownMenuItem>
-            <FileUploadMenuItem/>
-            <FolderUploadMenuItem/>
+            <div
+                class="mb-2 border-b border-gray-200 pb-2 dark:border-gray-700"
+            ></div>
+            <FileUploadMenuItem />
+            <FolderUploadMenuItem />
         </DropdownMenuContent>
     </DropdownMenu>
 </template>
