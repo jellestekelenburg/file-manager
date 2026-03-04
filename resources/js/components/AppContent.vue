@@ -69,7 +69,7 @@ onMounted(() => {
     </SidebarInset>
     <main
         v-else
-        class="mx-auto flex h-[calc(100vh-65px)] w-full max-w-7xl flex-1 flex-col overflow-hidden rounded-xl"
+        class="mx-auto flex h-[calc(100vh-65px)] w-full max-w-7xl flex-1 flex-col overflow-hidden rounded-xl px-4"
         :class="[className, dragOver ? 'justify-center' : '']"
         @drop.prevent="handleDrop"
         @dragover.prevent="onDragOver"

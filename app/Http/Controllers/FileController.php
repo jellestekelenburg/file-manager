@@ -6,6 +6,7 @@ use App\Http\Requests\StoreFileRequest;
 use App\Http\Requests\StoreFolderRequest;
 use App\Http\Resources\FileResource;
 use App\Models\File;
+use App\Services\StorageUserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -13,8 +14,10 @@ use Inertia\Inertia;
 
 class FileController extends Controller
 {
-    public function myFiles(?string $folder = null)
+    public function myFiles(StorageUserService $storageService, ?string $folder = null)
     {
+        $storage = $storageService->getCachedOrRecalculate(Auth::user());
+
         if ($folder) {
             $folder = File::query()
                 ->where('created_by', Auth::id())
@@ -34,7 +37,7 @@ class FileController extends Controller
         $ancestors = FileResource::collection([...$folder->ancestors, $folder]);
         $folder = new FileResource($folder);
 
-        return Inertia::render('MyFiles', compact('files', 'folder', 'ancestors'));
+        return Inertia::render('MyFiles', compact('files', 'folder', 'ancestors', 'storage'));
     }
 
     public function createFolder(StoreFolderRequest $request): RedirectResponse
@@ -55,8 +58,10 @@ class FileController extends Controller
         return redirect()->back();
     }
 
-    public function store(StoreFileRequest $request)
+    public function store(StoreFileRequest $request, StorageUserService $storageService)
     {
+        $totalUploadedBytes = 0;
+
         $data = $request->validated();
         $parent = $request->parent;
         $user = $request->user();
@@ -67,12 +72,14 @@ class FileController extends Controller
         }
 
         if (! empty($fileTree)) {
-            $this->saveFileTree($fileTree, $parent, $user);
+            $totalUploadedBytes = $this->saveFileTree($fileTree, $parent, $user);
         } else {
             foreach ($data['files'] as $file) {
-                $this->saveFile($file, $user, $parent);
+                $totalUploadedBytes = $this->saveFile($file, $user, $parent);
             }
         }
+
+        $storageService->addUsage($user, $totalUploadedBytes);
     }
 
     private function getRoot()
@@ -80,8 +87,9 @@ class FileController extends Controller
         return File::query()->where('created_by', Auth::id())->whereIsRoot()->firstOrFail();
     }
 
-    public function saveFileTree($fileTree, $parent, $user)
+    public function saveFileTree($fileTree, $parent, $user): int
     {
+        $total = 0;
         foreach ($fileTree as $name => $file) {
             if (is_array($file)) {
 
@@ -90,16 +98,20 @@ class FileController extends Controller
                 $folder->name = $name;
 
                 $parent->appendNode($folder);
-                $this->saveFileTree($file, $folder, $user);
+                $total += $this->saveFileTree($file, $folder, $user);
             } else {
-                $this->saveFile($file, $user, $parent);
+                $total += $this->saveFile($file, $user, $parent);
             }
         }
 
+        return $total;
     }
 
-    private function saveFile($file, $user, $parent): void
+    private function saveFile($file, $user, $parent): int
     {
+
+        $size = (int) $file->getSize();
+
         /* @var UploadedFile $file */
         $path = $file->store('/files'.$user->id);
 
@@ -111,5 +123,7 @@ class FileController extends Controller
         $model->size = $file->getSize();
 
         $parent->appendNode($model);
+
+        return $size;
     }
 }
