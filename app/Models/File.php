@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SizeFormatter;
 use App\Traits\HasCreatorAndUpdater;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -43,18 +44,9 @@ class File extends Model
         return $this->parent_id == null;
     }
 
-    public function getFileSize()
+    public function getFileSize(): string
     {
-        $NUM = 1024; // divider to B > KB > MB > GB
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-
-        if ($this->size < 1) {
-            return '-';
-        }
-
-        $power = $this->size > 0 ? floor(log($this->size, $NUM)) : 0;
-
-        return number_format($this->size / pow($NUM, $power), 2).$units[$power];
+        return SizeFormatter::formatBytes($this->size);
     }
 
     public function isOwnedBy($userId): bool

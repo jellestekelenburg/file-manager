@@ -48,4 +48,14 @@ class User extends Authenticatable implements MustVerifyEmail
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    public function getMaxStorageSize(): int
+    {
+        return $this->max_storage;
+    }
+
+    public function getStorageSize(): int
+    {
+        return $this->used_storage;
+    }
 }

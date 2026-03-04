@@ -31,9 +31,7 @@ class FileController extends Controller
             ->paginate(10);
 
         $files = FileResource::collection($files);
-
         $ancestors = FileResource::collection([...$folder->ancestors, $folder]);
-
         $folder = new FileResource($folder);
 
         return Inertia::render('MyFiles', compact('files', 'folder', 'ancestors'));
