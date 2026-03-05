@@ -7,7 +7,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class FileResource extends JsonResource
 {
-
     public static $wrap = false;
 
     /**
@@ -26,11 +25,20 @@ class FileResource extends JsonResource
             'mime' => $this->mime,
             'size' => $this->getFileSize(),
             'owner' => $this->owner,
+            'type' => $this->getFileType(),
             'created_at' => $this->created_at->diffForHumans(),
             'updated_at' => $this->updated_at->diffForHumans(),
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,
             'deleted_at' => $this->deleted_at,
         ];
+    }
+
+    private function getFileType(): string
+    {
+        $path = $this->storage_path;
+        $pathParts = explode('.', $path);
+
+        return end($pathParts);
     }
 }

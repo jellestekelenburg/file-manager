@@ -4,6 +4,8 @@ import BreadCrumbs from '@/components/app/BreadCrumbs.vue';
 import UserStorage from '@/components/app/UserStorage.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { myFiles } from '@/routes';
+import FileLayout from '@/layouts/FileLayout.vue';
+import FileIcon from '@/components/app/FileIcon.vue';
 
 type FileListItem = {
     id: number;
@@ -44,11 +46,11 @@ function openFolder(file: FileListItem): void {
 
 <template>
     <Head title="Dashboard" />
-    <AppLayout>
+    <FileLayout>
 
         <BreadCrumbs :ancestors="ancestors"></BreadCrumbs>
 
-        <table class="min-w-full mt-5 rounded-2xl overflow-hidden">
+        <table class="min-w-full rounded-2xl overflow-hidden">
             <thead class="border-b bg-gray-100 dark:bg-gray-700">
                 <tr>
                     <th
@@ -81,8 +83,9 @@ function openFolder(file: FileListItem): void {
                     class="cursor-pointer dark:border-b-gray-600 bg-white dark:bg-gray-800 transition duration-300 ease-in-out hover:bg-gray-100 not-last:border-b"
                 >
                     <td
-                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white inline-flex items-center gap-2"
                     >
+                        <FileIcon :file="file"></FileIcon>
                         {{ file.name }}
                     </td>
                     <td
@@ -111,7 +114,7 @@ function openFolder(file: FileListItem): void {
         </div>
 
         <UserStorage :storage="storage"></UserStorage>
-    </AppLayout>
+    </FileLayout>
 </template>
 
 <style scoped></style>

@@ -31,7 +31,7 @@ class FileController extends Controller
             ->where('created_by', Auth::id())
             ->orderBy('is_folder', 'desc')
             ->orderBy('files.created_at', 'desc')
-            ->paginate(10);
+            ->paginate(15);
 
         $files = FileResource::collection($files);
         $ancestors = FileResource::collection([...$folder->ancestors, $folder]);

@@ -19,7 +19,7 @@ const props = defineProps<{
 </script>
 
 <template>
-    <nav class="mt-2 mb-3 flex items-center justify-between p-1">
+    <nav class="my-4 flex items-center justify-between p-1">
         <ol class="inline-flex items-center space-x-1 md:space-x-3">
             <li
                 v-for="ans of props.ancestors.data"
