@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
+import { onMounted, onUpdated, ref } from 'vue';
 import BreadCrumbs from '@/components/app/BreadCrumbs.vue';
 import FileIcon from '@/components/app/FileIcon.vue';
 import UserStorage from '@/components/app/UserStorage.vue';
+import { httpGet } from '@/composables/httpHelper';
 import FileLayout from '@/layouts/FileLayout.vue';
 import { myFiles } from '@/routes';
 
@@ -18,6 +20,7 @@ type FileListItem = {
 };
 
 type Paginated<T> = {
+    links: any;
     data: T[];
 };
 
@@ -26,7 +29,7 @@ const props = withDefaults(
         files: Paginated<FileListItem>;
         folder?: FileListItem | null;
         ancestors?: { data: FileListItem[] };
-        storage?: void
+        storage?: void;
     }>(),
     {
         folder: null,
@@ -41,78 +44,120 @@ function openFolder(file: FileListItem): void {
 
     router.visit(myFiles.get({ folder: file.path }));
 }
+
+const loadMoreIntersect = ref(null);
+const allFiles = ref({
+    data: props.files.data,
+    next: props.files.links.next,
+});
+
+function loadMore() {
+    console.log(allFiles.value.next);
+
+    if (allFiles.value.next === null) {
+        return;
+    }
+
+    httpGet(allFiles.value.next).then((res) => {
+        allFiles.value.data = [...allFiles.value.data, ...res.data];
+        allFiles.value.next = res.links.next;
+    });
+}
+
+onUpdated(() => {
+    allFiles.value = {
+        data: props.files.data,
+        next: props.files.links.next,
+    };
+});
+
+onMounted(() => {
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => entry.isIntersecting && loadMore());
+        },
+        {
+            rootMargin: '-250px 0px 0px 0px',
+        },
+    );
+
+    observer.observe(loadMoreIntersect.value);
+});
 </script>
 
 <template>
     <Head title="Dashboard" />
     <FileLayout>
-
-        <BreadCrumbs :ancestors="ancestors"></BreadCrumbs>
-
-        <table class="min-w-full rounded-2xl overflow-hidden">
-            <thead class="border-b bg-gray-100 dark:bg-gray-700">
-                <tr>
-                    <th
-                        class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                        Name
-                    </th>
-                    <th
-                        class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                        Owner
-                    </th>
-                    <th
-                        class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                        Last modified
-                    </th>
-                    <th
-                        class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                        Size
-                    </th>
-                </tr>
-            </thead>
-            <tbody v-if="props.files.data.length">
-                <tr
-                    v-for="file of props.files.data"
-                    :key="file.id"
-                    @dblclick="openFolder(file)"
-                    class="cursor-pointer dark:border-b-gray-600 bg-white dark:bg-gray-800 transition duration-300 ease-in-out hover:bg-gray-100 not-last:border-b"
-                >
-                    <td
-                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white inline-flex items-center gap-2"
-                    >
-                        <FileIcon :file="file"></FileIcon>
-                        {{ file.name }}
-                    </td>
-                    <td
-                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-                    >
-                        {{ file.owner }}
-                    </td>
-                    <td
-                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-                    >
-                        {{ file.updated_at }}
-                    </td>
-                    <td
-                        class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-                    >
-                        {{ file.size }}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <div
-            v-if="!props.files.data.length"
-            class="py-8 text-center text-sm text-gray-400"
-        >
-            There is no data in this folder.
+        <div class="flex justify-between items-center">
+            <BreadCrumbs :ancestors="ancestors"></BreadCrumbs>
+            <UserStorage :storage="storage"></UserStorage>
         </div>
 
-        <UserStorage :storage="storage"></UserStorage>
+        <div class="flex-1 overflow-auto mb-6">
+            <table class="min-w-full overflow-hidden rounded-2xl">
+                <thead class="border-b bg-gray-100 dark:bg-gray-700">
+                    <tr>
+                        <th
+                            class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                            Name
+                        </th>
+                        <th
+                            class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                            Owner
+                        </th>
+                        <th
+                            class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                            Last modified
+                        </th>
+                        <th
+                            class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                            Size
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr
+                        v-for="file of allFiles.data"
+                        :key="file.id"
+                        @dblclick="openFolder(file)"
+                        class="cursor-pointer bg-white transition duration-300 ease-in-out not-last:border-b hover:bg-gray-100 dark:border-b-gray-600 dark:bg-gray-800"
+                    >
+                        <td
+                            class="inline-flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                        >
+                            <FileIcon :file="file"></FileIcon>
+                            {{ file.name }}
+                        </td>
+                        <td
+                            class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                        >
+                            {{ file.owner }}
+                        </td>
+                        <td
+                            class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                        >
+                            {{ file.updated_at }}
+                        </td>
+                        <td
+                            class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                        >
+                            {{ file.size }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div
+                v-if="!allFiles.data.length"
+                class="py-8 text-center text-sm text-gray-400"
+            >
+                There is no data in this folder.
+            </div>
+            <div ref="loadMoreIntersect"></div>
+        </div>
     </FileLayout>
 </template>
 

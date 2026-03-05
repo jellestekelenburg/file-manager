@@ -8,13 +8,14 @@ use App\Http\Resources\FileResource;
 use App\Models\File;
 use App\Services\StorageUserService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class FileController extends Controller
 {
-    public function myFiles(StorageUserService $storageService, ?string $folder = null)
+    public function myFiles(Request $request, StorageUserService $storageService, ?string $folder = null)
     {
         $storage = $storageService->getCachedOrRecalculate(Auth::user());
 
@@ -31,9 +32,14 @@ class FileController extends Controller
             ->where('created_by', Auth::id())
             ->orderBy('is_folder', 'desc')
             ->orderBy('files.created_at', 'desc')
-            ->paginate(15);
+            ->paginate(10);
 
         $files = FileResource::collection($files);
+
+        if ($request->wantsJson()) {
+            return $files;
+        }
+
         $ancestors = FileResource::collection([...$folder->ancestors, $folder]);
         $folder = new FileResource($folder);
 

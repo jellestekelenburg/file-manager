@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
+import ErrorDialog from '@/components/app/ErrorDialog.vue';
+import FormProgress from '@/components/app/FormProgress.vue';
 import { SidebarInset } from '@/components/ui/sidebar';
 import {
     emitter,
@@ -8,8 +10,6 @@ import {
     showErrorDialog,
 } from '@/composables/event-bus';
 import file from '@/routes/file';
-import FormProgress from '@/components/app/FormProgress.vue';
-import ErrorDialog from '@/components/app/ErrorDialog.vue';
 
 type Props = {
     variant?: 'header' | 'sidebar';
@@ -55,13 +55,15 @@ function handleDrop(ev: DragEvent) {
     uploadFiles(files);
 }
 
-function uploadFiles(files: FileList) {
+function uploadFiles(files: any) {
     fileUploadForm.parent_id = currentFolderId.value;
     fileUploadForm.files = files;
     fileUploadForm.relative_paths = [...files].map((f) => f.webkitRelativePath);
 
     fileUploadForm.post(file.store().url, {
-        onSuccess: () => {},
+        onSuccess: () => {
+
+        },
         onError: (errors) => {
             let message = '';
 
@@ -72,6 +74,10 @@ function uploadFiles(files: FileList) {
             }
 
             showErrorDialog(message);
+        },
+        onFinish: () => {
+            fileUploadForm.clearErrors();
+            fileUploadForm.reset();
         },
     });
 }
@@ -87,7 +93,7 @@ onMounted(() => {
     </SidebarInset>
     <main
         v-else
-        class="mx-auto flex h-[calc(100vh-65px)] w-full max-w-7xl flex-1 flex-col overflow-hidden rounded-xl px-4"
+        class="mx-auto flex h-[calc(100vh-65px)] w-full max-w-7xl  flex-col overflow-hidden rounded-xl px-4"
         :class="[className, dragOver ? 'justify-center' : '']"
         @drop.prevent="handleDrop"
         @dragover.prevent="onDragOver"
