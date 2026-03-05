@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import BreadCrumbs from '@/components/app/BreadCrumbs.vue';
-import UserStorage from '@/components/app/UserStorage.vue';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { myFiles } from '@/routes';
-import FileLayout from '@/layouts/FileLayout.vue';
 import FileIcon from '@/components/app/FileIcon.vue';
+import UserStorage from '@/components/app/UserStorage.vue';
+import FileLayout from '@/layouts/FileLayout.vue';
+import { myFiles } from '@/routes';
 
 type FileListItem = {
     id: number;
