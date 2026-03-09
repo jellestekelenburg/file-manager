@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { login, myFiles, register } from '@/routes';
 import AppLogo from '@/components/AppLogo.vue';
+import { login, myFiles, register } from '@/routes';
 
 withDefaults(
     defineProps<{

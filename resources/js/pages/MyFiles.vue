@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { onMounted, onUpdated, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import BreadCrumbs from '@/components/app/BreadCrumbs.vue';
 import FileIcon from '@/components/app/FileIcon.vue';
 import UserStorage from '@/components/app/UserStorage.vue';
@@ -50,29 +50,63 @@ const allFiles = ref({
     data: props.files.data,
     next: props.files.links.next,
 });
+const isLoadingMore = ref(false);
+const currentFolderId = computed(() => props.folder?.id ?? null);
+let observer: IntersectionObserver | null = null;
+
+function mergeIncomingTopPage() {
+    const incoming = props.files.data;
+    const incomingIds = new Set(incoming.map((file) => file.id));
+    const existingTail = allFiles.value.data.filter(
+        (file) => !incomingIds.has(file.id),
+    );
+
+    allFiles.value.data = [...incoming, ...existingTail];
+}
 
 function loadMore() {
-    console.log(allFiles.value.next);
-
-    if (allFiles.value.next === null) {
+    if (allFiles.value.next === null || isLoadingMore.value) {
         return;
     }
 
-    httpGet(allFiles.value.next).then((res) => {
-        allFiles.value.data = [...allFiles.value.data, ...res.data];
-        allFiles.value.next = res.links.next;
-    });
+    isLoadingMore.value = true;
+    httpGet(allFiles.value.next)
+        .then((res) => {
+            allFiles.value.data = [...allFiles.value.data, ...res.data];
+            allFiles.value.next = res.links.next;
+        })
+        .finally(() => {
+            isLoadingMore.value = false;
+        });
 }
 
-onUpdated(() => {
-    allFiles.value = {
-        data: props.files.data,
-        next: props.files.links.next,
-    };
-});
+watch(
+    () => currentFolderId.value,
+    (newFolderId, oldFolderId) => {
+        if (newFolderId === oldFolderId) {
+            return;
+        }
+
+        allFiles.value = {
+            data: props.files.data,
+            next: props.files.links.next,
+        };
+    },
+);
+
+watch(
+    () => props.files.data,
+    () => {
+        mergeIncomingTopPage();
+    },
+);
 
 onMounted(() => {
-    const observer = new IntersectionObserver(
+    if (!loadMoreIntersect.value) {
+        return;
+    }
+
+    observer = new IntersectionObserver(
         (entries) => {
             entries.forEach((entry) => entry.isIntersecting && loadMore());
         },
@@ -82,6 +116,10 @@ onMounted(() => {
     );
 
     observer.observe(loadMoreIntersect.value);
+});
+
+onBeforeUnmount(() => {
+    observer?.disconnect();
 });
 </script>
 
