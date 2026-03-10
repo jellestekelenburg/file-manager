@@ -7,6 +7,7 @@ import UserStorage from '@/components/app/UserStorage.vue';
 import { httpGet } from '@/composables/httpHelper';
 import FileLayout from '@/layouts/FileLayout.vue';
 import { myFiles } from '@/routes';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type FileListItem = {
     id: number;
@@ -51,6 +52,9 @@ const allFiles = ref({
     next: props.files.links.next,
 });
 const isLoadingMore = ref(false);
+const allSelected = ref(false);
+const selected = ref<Record<number, boolean>>({});
+
 const currentFolderId = computed(() => props.folder?.id ?? null);
 let observer: IntersectionObserver | null = null;
 
@@ -78,6 +82,14 @@ function loadMore() {
         .finally(() => {
             isLoadingMore.value = false;
         });
+}
+
+function onSelectAllChange() {
+    allFiles.value.data.forEach((file) => {
+        selected.value[file.id] = allSelected.value;
+    });
+
+    console.log(selected);
 }
 
 watch(
@@ -126,15 +138,23 @@ onBeforeUnmount(() => {
 <template>
     <Head title="Dashboard" />
     <FileLayout>
-        <div class="flex justify-between items-center">
+        <div class="flex items-center justify-between">
             <BreadCrumbs :ancestors="ancestors"></BreadCrumbs>
             <UserStorage :storage="storage"></UserStorage>
         </div>
-
-        <div class="flex-1 overflow-auto mb-6">
+        <div class="mb-6 flex-1 overflow-auto">
             <table class="min-w-full overflow-hidden rounded-2xl">
                 <thead class="border-b bg-gray-100 dark:bg-gray-700">
                     <tr>
+                        <th
+                            class="w-6 py-4 ps-6 text-start text-sm font-medium"
+                        >
+                            <Checkbox
+                                v-model="allSelected"
+                                @update:model-value="onSelectAllChange"
+                            >
+                            </Checkbox>
+                        </th>
                         <th
                             class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
                         >
@@ -162,8 +182,23 @@ onBeforeUnmount(() => {
                         v-for="file of allFiles.data"
                         :key="file.id"
                         @dblclick="openFolder(file)"
-                        class="cursor-pointer bg-white transition duration-300 ease-in-out not-last:border-b hover:bg-gray-100 dark:border-b-gray-600 dark:bg-gray-800"
+                        class="cursor-pointer transition duration-300 ease-in-out not-last:border-b"
+                        :class="
+                            selected[file.id] || allSelected
+                                ? 'bg-blue-50 hover:bg-blue-100'
+                                : 'bg-white hover:bg-gray-100 dark:border-b-gray-600 dark:bg-gray-800'
+                        "
                     >
+                        <td
+                            class="w-4 items-center gap-2 py-4 ps-6 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                        >
+                            <Checkbox
+                                :model-value="
+                                    allSelected || !!selected[file.id]
+                                "
+                                @update:model-value="selected[file.id] = $event"
+                            />
+                        </td>
                         <td
                             class="inline-flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
                         >

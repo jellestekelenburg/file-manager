@@ -60,6 +60,9 @@ function uploadFiles(files: any) {
     fileUploadForm.files = files;
     fileUploadForm.relative_paths = [...files].map((f) => f.webkitRelativePath);
 
+    // check if files are more that php ini allows and path via right way
+
+
     fileUploadForm.post(file.store().url, {
         onSuccess: () => {
 

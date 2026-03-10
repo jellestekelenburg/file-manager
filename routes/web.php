@@ -20,6 +20,7 @@ Route::controller(FileController::class)
         // file upload
         Route::post('/file', 'store')->name('file.store');
         // folder upload
+        Route::delete('file', 'destroy')->name('file.delete');
     });
 
 Route::get('dashboard', function () {
