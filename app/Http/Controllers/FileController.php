@@ -150,8 +150,8 @@ class FileController extends Controller
         foreach ($data['ids'] ?? [] as $id) {
             $file = File::find($id);
             $file->delete();
-
-            return to_route('myFiles', ['folder' => $parent->path]);
         }
+
+        return to_route('myFiles', ['folder' => $parent->path]);
     }
 }

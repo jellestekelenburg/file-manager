@@ -2,12 +2,13 @@
 import { Head, router } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import BreadCrumbs from '@/components/app/BreadCrumbs.vue';
+import DeleteFilesButton from '@/components/app/DeleteFilesButton.vue';
 import FileIcon from '@/components/app/FileIcon.vue';
 import UserStorage from '@/components/app/UserStorage.vue';
+import { Checkbox } from '@/components/ui/checkbox';
 import { httpGet } from '@/composables/httpHelper';
 import FileLayout from '@/layouts/FileLayout.vue';
 import { myFiles } from '@/routes';
-import { Checkbox } from '@/components/ui/checkbox';
 
 type FileListItem = {
     id: number;
@@ -37,15 +38,6 @@ const props = withDefaults(
         ancestors: () => ({ data: [] }),
     },
 );
-
-function openFolder(file: FileListItem): void {
-    if (!file.is_folder || !file.path) {
-        return;
-    }
-
-    router.visit(myFiles.get({ folder: file.path }));
-}
-
 const loadMoreIntersect = ref(null);
 const allFiles = ref({
     data: props.files.data,
@@ -54,18 +46,35 @@ const allFiles = ref({
 const isLoadingMore = ref(false);
 const allSelected = ref(false);
 const selected = ref<Record<number, boolean>>({});
+const selectedIds = computed(() =>
+    Object.entries(selected.value)
+        .filter((a) => a[1])
+        .map((a) => a[0]),
+);
 
 const currentFolderId = computed(() => props.folder?.id ?? null);
 let observer: IntersectionObserver | null = null;
 
-function mergeIncomingTopPage() {
-    const incoming = props.files.data;
+function openFolder(file: FileListItem): void {
+    if (!file.is_folder || !file.path) {
+        return;
+    }
+
+    router.visit(myFiles.get({ folder: file.path }));
+}
+function mergeIncomingTopPage(
+    incoming: FileListItem[],
+    previousTopPage: FileListItem[] = [],
+) {
     const incomingIds = new Set(incoming.map((file) => file.id));
+    const previousTopPageIds = new Set(previousTopPage.map((file) => file.id));
     const existingTail = allFiles.value.data.filter(
-        (file) => !incomingIds.has(file.id),
+        (file) =>
+            !incomingIds.has(file.id) && !previousTopPageIds.has(file.id),
     );
 
     allFiles.value.data = [...incoming, ...existingTail];
+    allFiles.value.next = props.files.links.next;
 }
 
 function loadMore() {
@@ -88,8 +97,25 @@ function onSelectAllChange() {
     allFiles.value.data.forEach((file) => {
         selected.value[file.id] = allSelected.value;
     });
+}
 
-    console.log(selected);
+function toggleFileSelect(file: FileListItem) {
+    selected.value[file.id] = !selected.value[file.id];
+
+    if (!selected.value[file.id]) {
+        allSelected.value = false;
+    } else {
+        let checked = true;
+
+        for (const file of allFiles.value.data) {
+            if (!selected.value[file.id]) {
+                checked = false;
+                break;
+            }
+        }
+
+        allSelected.value = checked;
+    }
 }
 
 watch(
@@ -108,8 +134,8 @@ watch(
 
 watch(
     () => props.files.data,
-    () => {
-        mergeIncomingTopPage();
+    (incoming, previous = []) => {
+        mergeIncomingTopPage(incoming, previous);
     },
 );
 
@@ -140,7 +166,10 @@ onBeforeUnmount(() => {
     <FileLayout>
         <div class="flex items-center justify-between">
             <BreadCrumbs :ancestors="ancestors"></BreadCrumbs>
-            <UserStorage :storage="storage"></UserStorage>
+            <DeleteFilesButton
+                :delete-all="allSelected"
+                :delete-ids="selectedIds"
+            ></DeleteFilesButton>
         </div>
         <div class="mb-6 flex-1 overflow-auto">
             <table class="min-w-full overflow-hidden rounded-2xl">
@@ -182,6 +211,7 @@ onBeforeUnmount(() => {
                         v-for="file of allFiles.data"
                         :key="file.id"
                         @dblclick="openFolder(file)"
+                        @click="toggleFileSelect(file)"
                         class="cursor-pointer transition duration-300 ease-in-out not-last:border-b"
                         :class="
                             selected[file.id] || allSelected
@@ -196,7 +226,6 @@ onBeforeUnmount(() => {
                                 :model-value="
                                     allSelected || !!selected[file.id]
                                 "
-                                @update:model-value="selected[file.id] = $event"
                             />
                         </td>
                         <td
@@ -231,6 +260,8 @@ onBeforeUnmount(() => {
             </div>
             <div ref="loadMoreIntersect"></div>
         </div>
+
+        <UserStorage :storage="storage"></UserStorage>
     </FileLayout>
 </template>
 

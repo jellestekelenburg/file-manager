@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 
 const props = defineProps<{
-    storage: {
+    storage?: {
         used_bytes: number;
         max_bytes: number;
         used_formatted: string;

@@ -32,6 +32,7 @@ import { getInitials } from '@/composables/useInitials';
 import { toUrl } from '@/lib/utils';
 import { myFiles } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
+import UserStorage from '@/components/app/UserStorage.vue';
 
 type Props = {
     breadcrumbs?: BreadcrumbItem[];
