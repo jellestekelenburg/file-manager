@@ -91,12 +91,8 @@ onMounted(() => {
 </script>
 
 <template>
-    <SidebarInset v-if="props.variant === 'sidebar'" :class="className">
-        <slot />
-    </SidebarInset>
-    <main
-        v-else
-        class="mx-auto flex h-[calc(100vh-65px)] w-full max-w-7xl  flex-col overflow-hidden rounded-xl px-4"
+    <SidebarInset
+        v-if="props.variant === 'sidebar'"
         :class="[className, dragOver ? 'justify-center' : '']"
         @drop.prevent="handleDrop"
         @dragover.prevent="onDragOver"
@@ -114,7 +110,30 @@ onMounted(() => {
         <template v-else>
             <slot />
             <ErrorDialog />
-            <FormProgress :form="fileUploadForm"></FormProgress>
+            <FormProgress :form="fileUploadForm" />
+        </template>
+    </SidebarInset>
+    <main
+        v-else
+        class="mx-auto flex h-[calc(100vh-65px)] w-full max-w-7xl flex-col overflow-hidden rounded-xl px-4"
+        :class="[className, dragOver ? 'justify-center' : '']"
+        @drop.prevent="handleDrop"
+        @dragover.prevent="onDragOver"
+        @dragleave.prevent="onDragLeave"
+    >
+        <template v-if="dragOver">
+            <div class="flex w-full items-center justify-center">
+                <div
+                    class="rounded-xl border-2 border-dotted border-gray-300 p-12 text-gray-700 lg:p-16"
+                >
+                    Drop Files here to upload
+                </div>
+            </div>
+        </template>
+        <template v-else>
+            <slot />
+            <ErrorDialog />
+            <FormProgress :form="fileUploadForm" />
         </template>
     </main>
 </template>

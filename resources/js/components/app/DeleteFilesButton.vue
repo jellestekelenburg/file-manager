@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
+import { Trash2 } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,8 +10,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import file from '@/routes/file';
 import { showErrorDialog } from '@/composables/event-bus';
+import file from '@/routes/file';
 
 const props = defineProps<{
     deleteAll: {
@@ -35,7 +36,7 @@ const deleteFilesForm = useForm({
 
 function clickOnDelete() {
     if (!props.deleteAll && !props.deleteIds.length) {
-        showErrorDialog('Please select at least one file or folder to delete')
+        showErrorDialog('Please select at least one file or folder to delete');
         return;
     }
     showModal.value = true;
@@ -63,18 +64,11 @@ function onDeleteConfirm() {
 
 <template>
     <button
-        class="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium whitespace-nowrap text-primary-foreground transition-all outline-none hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 has-[>svg]:px-3 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+        :class="props.deleteIds.length > 0 ? 'inline-flex' : 'hidden'"
+        class=" h-9 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium whitespace-nowrap text-primary-foreground transition-all outline-none hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 has-[>svg]:px-3 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
         @click="clickOnDelete"
     >
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 640 640"
-            fill="currentColor"
-        >
-            <path
-                d="M240 48L400 48L424 112L544 112L544 160L96 160L96 112L216 112L240 48zM152 576L124.7 208L172.8 208L196.5 528L443.3 528L467 208L515.1 208L487.8 576L151.8 576z"
-            />
-        </svg>
+        <trash2 />
         Delete
     </button>
 

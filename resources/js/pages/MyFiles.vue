@@ -164,7 +164,7 @@ onBeforeUnmount(() => {
 <template>
     <Head title="Dashboard" />
     <FileLayout>
-        <div class="flex items-center justify-between">
+        <div class="flex px-4 items-center justify-between">
             <BreadCrumbs :ancestors="ancestors"></BreadCrumbs>
             <DeleteFilesButton
                 :delete-all="allSelected"
@@ -172,7 +172,7 @@ onBeforeUnmount(() => {
             ></DeleteFilesButton>
         </div>
         <div class="mb-6 flex-1 overflow-auto">
-            <table class="min-w-full overflow-hidden rounded-2xl">
+            <table class="min-w-full overflow-hidden">
                 <thead class="border-b bg-gray-100 dark:bg-gray-700">
                     <tr>
                         <th

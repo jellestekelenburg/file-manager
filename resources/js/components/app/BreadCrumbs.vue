@@ -20,7 +20,7 @@ const props = defineProps<{
 
 <template>
     <nav class="my-4 flex items-center justify-between p-1">
-        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <ol class="inline-flex items-center space-x-1 md:space-x-2">
             <li
                 v-for="ans of props.ancestors.data"
                 :key="ans.id"
@@ -41,7 +41,7 @@ const props = defineProps<{
                             d="M336 70.1C326.9 61.9 313.1 61.9 304 70.1L72 278.1C62.1 286.9 61.3 302.1 70.2 312C79.1 321.9 94.2 322.7 104.1 313.8L112.1 306.6L112.1 511.9C112.1 547.2 140.8 575.9 176.1 575.9L464.1 575.9C499.4 575.9 528.1 547.2 528.1 511.9L528.1 306.6L536.1 313.8C546 322.6 561.1 321.8 570 312C578.9 302.2 578 287 568.2 278.1L336 70.1zM480 263.7L480 512C480 520.8 472.8 528 464 528L176 528C167.2 528 160 520.8 160 512L160 263.7L320 120.2L480 263.7z"
                         />
                     </svg>
-                    My Files
+                    My files
                 </Link>
                 <div v-if="ans.parent_id" class="inline-flex items-center">
                     <svg
