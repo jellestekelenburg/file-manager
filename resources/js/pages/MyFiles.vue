@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import BreadCrumbs from '@/components/app/BreadCrumbs.vue';
 import DeleteFilesButton from '@/components/app/DeleteFilesButton.vue';
+import DownloadFilesButton from '@/components/app/DownloadFilesButton.vue';
 import FileIcon from '@/components/app/FileIcon.vue';
 import UserStorage from '@/components/app/UserStorage.vue';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -69,8 +70,7 @@ function mergeIncomingTopPage(
     const incomingIds = new Set(incoming.map((file) => file.id));
     const previousTopPageIds = new Set(previousTopPage.map((file) => file.id));
     const existingTail = allFiles.value.data.filter(
-        (file) =>
-            !incomingIds.has(file.id) && !previousTopPageIds.has(file.id),
+        (file) => !incomingIds.has(file.id) && !previousTopPageIds.has(file.id),
     );
 
     allFiles.value.data = [...incoming, ...existingTail];
@@ -116,6 +116,11 @@ function toggleFileSelect(file: FileListItem) {
 
         allSelected.value = checked;
     }
+}
+
+function onDelete() {
+    allSelected.value = false;
+    selected.value = {};
 }
 
 watch(
@@ -164,104 +169,120 @@ onBeforeUnmount(() => {
 <template>
     <Head title="Dashboard" />
     <FileLayout>
-        <div class="flex px-4 items-center justify-between">
-            <BreadCrumbs :ancestors="ancestors"></BreadCrumbs>
-            <DeleteFilesButton
-                :delete-all="allSelected"
-                :delete-ids="selectedIds"
-            ></DeleteFilesButton>
-        </div>
-        <div class="mb-6 flex-1 overflow-auto">
-            <table class="min-w-full overflow-hidden">
-                <thead class="border-b bg-gray-100 dark:bg-gray-700">
-                    <tr>
-                        <th
-                            class="w-6 py-4 ps-6 text-start text-sm font-medium"
-                        >
-                            <Checkbox
-                                v-model="allSelected"
-                                @update:model-value="onSelectAllChange"
-                            >
-                            </Checkbox>
-                        </th>
-                        <th
-                            class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
-                        >
-                            Name
-                        </th>
-                        <th
-                            class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
-                        >
-                            Owner
-                        </th>
-                        <th
-                            class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
-                        >
-                            Last modified
-                        </th>
-                        <th
-                            class="px-6 py-4 text-start text-sm font-medium text-gray-900 dark:text-white"
-                        >
-                            Size
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr
-                        v-for="file of allFiles.data"
-                        :key="file.id"
-                        @dblclick="openFolder(file)"
-                        @click="toggleFileSelect(file)"
-                        class="cursor-pointer transition duration-300 ease-in-out not-last:border-b"
-                        :class="
-                            selected[file.id] || allSelected
-                                ? 'bg-blue-50 hover:bg-blue-100'
-                                : 'bg-white hover:bg-gray-100 dark:border-b-gray-600 dark:bg-gray-800'
-                        "
-                    >
-                        <td
-                            class="w-4 items-center gap-2 py-4 ps-6 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-                        >
-                            <Checkbox
-                                :model-value="
-                                    allSelected || !!selected[file.id]
-                                "
-                            />
-                        </td>
-                        <td
-                            class="inline-flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-                        >
-                            <FileIcon :file="file"></FileIcon>
-                            {{ file.name }}
-                        </td>
-                        <td
-                            class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-                        >
-                            {{ file.owner }}
-                        </td>
-                        <td
-                            class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-                        >
-                            {{ file.updated_at }}
-                        </td>
-                        <td
-                            class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-                        >
-                            {{ file.size }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="flex h-full min-h-0 flex-col">
             <div
-                v-if="!allFiles.data.length"
-                class="py-8 text-center text-sm text-gray-400"
+                class="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b bg-white px-4 dark:bg-gray-800"
             >
-                There is no data in this folder.
+                <BreadCrumbs :ancestors="ancestors"></BreadCrumbs>
+                <div class="inline-flex gap-x-2">
+                    <DeleteFilesButton
+                        :delete-all="allSelected"
+                        :delete-ids="selectedIds"
+                        @delete="onDelete"
+                    ></DeleteFilesButton>
+                    <DownloadFilesButton
+                        :download-all="allSelected"
+                        :download-ids="selectedIds"
+                    ></DownloadFilesButton>
+                </div>
             </div>
-            <div ref="loadMoreIntersect"></div>
-        </div>
 
-        <UserStorage :storage="storage"></UserStorage>
+            <div class="min-h-0 flex-1 overflow-auto">
+                <table class="relative min-w-full">
+                    <thead class="border-b">
+                        <tr>
+                            <th
+                                class="sticky top-0 z-10 w-6 bg-gray-100 py-4 ps-6 text-start text-sm font-medium dark:bg-gray-700"
+                            >
+                                <Checkbox
+                                    v-model="allSelected"
+                                    @update:model-value="onSelectAllChange"
+                                >
+                                </Checkbox>
+                            </th>
+                            <th
+                                class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
+                            >
+                                Name
+                            </th>
+                            <th
+                                class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
+                            >
+                                Owner
+                            </th>
+                            <th
+                                class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
+                            >
+                                Last modified
+                            </th>
+                            <th
+                                class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
+                            >
+                                Size
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="file of allFiles.data"
+                            :key="file.id"
+                            @dblclick="openFolder(file)"
+                            @click="toggleFileSelect(file)"
+                            class="cursor-pointer transition duration-300 ease-in-out not-last:border-b"
+                            :class="
+                                selected[file.id] || allSelected
+                                    ? 'bg-blue-50 hover:bg-blue-100'
+                                    : 'bg-white hover:bg-gray-100 dark:border-b-gray-600 dark:bg-gray-800'
+                            "
+                        >
+                            <td
+                                class="w-4 items-center gap-2 py-4 ps-6 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                            >
+                                <Checkbox
+                                    :model-value="
+                                        allSelected || !!selected[file.id]
+                                    "
+                                />
+                            </td>
+                            <td
+                                class="inline-flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                            >
+                                <FileIcon :file="file"></FileIcon>
+                                {{ file.name }}
+                            </td>
+                            <td
+                                class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                            >
+                                {{ file.owner }}
+                            </td>
+                            <td
+                                class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                            >
+                                {{ file.updated_at }}
+                            </td>
+                            <td
+                                class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
+                            >
+                                {{ file.size }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div
+                    v-if="!allFiles.data.length"
+                    class="py-8 text-center text-sm text-gray-400"
+                >
+                    There is no data in this folder.
+                </div>
+
+                <div ref="loadMoreIntersect"></div>
+            </div>
+
+            <div class="shrink-0 px-4 py-2">
+                <UserStorage :storage="storage"></UserStorage>
+            </div>
+        </div>
     </FileLayout>
 </template>
 

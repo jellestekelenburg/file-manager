@@ -14,28 +14,25 @@ import { showErrorDialog } from '@/composables/event-bus';
 import file from '@/routes/file';
 
 const props = defineProps<{
-    deleteAll: {
-        type: boolean;
-        required: false;
-        default: false;
-    };
-    deleteIds: {
-        type: Array<any>;
-        required: false;
-    };
+    deleteAll?: boolean;
+    deleteIds?: Array<number | string>;
 }>();
 
 const emit = defineEmits(['delete']);
 const showModal = ref(false);
 const page = usePage();
-const deleteFilesForm = useForm({
-    all: null,
+const deleteFilesForm = useForm<{
+    all: boolean;
+    ids: Array<number | string>;
+    parent_id: number | null;
+}>({
+    all: false,
     ids: [],
     parent_id: null,
 });
 
 function clickOnDelete() {
-    if (!props.deleteAll && !props.deleteIds.length) {
+    if (!props.deleteAll && !(props.deleteIds?.length ?? 0)) {
         showErrorDialog('Please select at least one file or folder to delete');
         return;
     }
@@ -46,11 +43,13 @@ function triggerModal() {
 }
 
 function onDeleteConfirm() {
-    deleteFilesForm.parent_id = page.props.folder.id;
+    deleteFilesForm.parent_id = page.props.folder?.id ?? null;
     if (props.deleteAll) {
         deleteFilesForm.all = true;
+        deleteFilesForm.ids = [];
     } else {
-        deleteFilesForm.ids = props.deleteIds;
+        deleteFilesForm.all = false;
+        deleteFilesForm.ids = props.deleteIds ?? [];
     }
 
     deleteFilesForm.delete(file.delete().url, {
@@ -64,7 +63,7 @@ function onDeleteConfirm() {
 
 <template>
     <button
-        :class="props.deleteIds.length > 0 ? 'inline-flex' : 'hidden'"
+        :class="(props.deleteIds?.length ?? 0) > 0 ? 'inline-flex' : 'hidden'"
         class=" h-9 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium whitespace-nowrap text-primary-foreground transition-all outline-none hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 has-[>svg]:px-3 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
         @click="clickOnDelete"
     >

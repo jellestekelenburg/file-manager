@@ -67,13 +67,13 @@ class File extends Model
             $model->path = (! $model->parent->isRoot() ? $model->parent->path.'/' : '').Str::slug($model->name);
         });
 
-        static::deleted(function (File $model) {
-            if (! $model->is_folder) {
-                Storage::delete($model->path);
-            }
-            // In this instance, Files get removed IF selected, selected folder ALSO get removed
-            // BUT files inside a removed folder will NOT be deleted, TODO: Fix this issue
-            // CHECK: (5:32:30 (timestamp YT))
-        });
+//        static::deleted(function (File $model) {
+//            if (! $model->is_folder) {
+//                Storage::delete($model->path);
+//            }
+//            // In this instance, Files get removed IF selected, selected folder ALSO get removed
+//            // BUT files inside a removed folder will NOT be deleted, TODO: Fix this issue
+//            // CHECK: (5:32:30 (timestamp YT))
+//        });
     }
 }
