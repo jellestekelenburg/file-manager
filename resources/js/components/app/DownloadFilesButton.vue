@@ -21,9 +21,8 @@ function downloadFiles() {
     const p = new URLSearchParams();
     const parentId = page.props.folder?.id;
 
-    if (parentId !== undefined && parentId !== null) {
-        p.append('parent_id', String(parentId));
-    }
+
+    p.append('parent_id', String(parentId));
 
     if (props.downloadAll) {
         p.append('all', '1');

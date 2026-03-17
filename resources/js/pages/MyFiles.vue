@@ -2,6 +2,8 @@
 import { Head, router } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import BreadCrumbs from '@/components/app/BreadCrumbs.vue';
+import CreateFolderModal from '@/components/app/CreateFolderModal.vue';
+import CreateNewDropdown from '@/components/app/CreateNewDropdown.vue';
 import DeleteFilesButton from '@/components/app/DeleteFilesButton.vue';
 import DownloadFilesButton from '@/components/app/DownloadFilesButton.vue';
 import FileIcon from '@/components/app/FileIcon.vue';
@@ -46,6 +48,7 @@ const allFiles = ref({
 });
 const isLoadingMore = ref(false);
 const allSelected = ref(false);
+const createFolderModal = ref(false);
 const selected = ref<Record<number, boolean>>({});
 const selectedIds = computed(() =>
     Object.entries(selected.value)
@@ -123,6 +126,10 @@ function onDelete() {
     selected.value = {};
 }
 
+function showCreateFolderModal() {
+    createFolderModal.value = true;
+}
+
 watch(
     () => currentFolderId.value,
     (newFolderId, oldFolderId) => {
@@ -169,6 +176,7 @@ onBeforeUnmount(() => {
 <template>
     <Head title="Dashboard" />
     <FileLayout>
+        <CreateFolderModal v-model="createFolderModal" />
         <div class="flex h-full min-h-0 flex-col">
             <div
                 class="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b bg-white px-4 dark:bg-gray-800"
@@ -184,6 +192,10 @@ onBeforeUnmount(() => {
                         :download-all="allSelected"
                         :download-ids="selectedIds"
                     ></DownloadFilesButton>
+                    <CreateNewDropdown
+                        button-class="h-9"
+                        @create-folder="showCreateFolderModal"
+                    />
                 </div>
             </div>
 
@@ -228,7 +240,7 @@ onBeforeUnmount(() => {
                             :key="file.id"
                             @dblclick="openFolder(file)"
                             @click="toggleFileSelect(file)"
-                            class="cursor-pointer transition duration-300 ease-in-out not-last:border-b"
+                            class="cursor-pointer transition duration-300 ease-in-out not-last:border-b select-none"
                             :class="
                                 selected[file.id] || allSelected
                                     ? 'bg-blue-50 hover:bg-blue-100'

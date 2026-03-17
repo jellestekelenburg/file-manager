@@ -43,7 +43,7 @@ function handleCreateFolderSelect(event: Event) {
                 Create New
             </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" class="w-56">
+        <DropdownMenuContent align="end" class="w-42">
             <DropdownMenuItem @select="handleCreateFolderSelect">
                 Create new folder
             </DropdownMenuItem>

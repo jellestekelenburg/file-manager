@@ -196,11 +196,7 @@ class FileController extends Controller
             } else {
                 $file = File::query()->whereIn('id', $ids)->get();
                 $url = $zipCreator->createZip($file);
-                if ($parent->name ?? false) {
-                    $filename = $parent->name.'.zip';
-                } else {
-                    $filename = 'master.zip';
-                }
+                $filename = $parent->name.'.zip';
             }
         }
 

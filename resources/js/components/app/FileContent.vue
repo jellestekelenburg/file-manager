@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
-import ErrorDialog from '@/components/app/ErrorDialog.vue';
 import FormProgress from '@/components/app/FormProgress.vue';
+import ErrorDialog from '@/components/app/global/ErrorDialog.vue';
+import Notification from '@/components/app/global/Notification.vue';
 import { SidebarInset } from '@/components/ui/sidebar';
 import {
     emitter,
@@ -60,13 +61,8 @@ function uploadFiles(files: any) {
     fileUploadForm.files = files;
     fileUploadForm.relative_paths = [...files].map((f) => f.webkitRelativePath);
 
-    // check if files are more that php ini allows and path via right way
-
-
     fileUploadForm.post(file.store().url, {
-        onSuccess: () => {
-
-        },
+        onSuccess: () => {},
         onError: (errors) => {
             let message = '';
 
@@ -92,7 +88,6 @@ onMounted(() => {
 
 <template>
     <SidebarInset
-        v-if="props.variant === 'sidebar'"
         :class="[className, dragOver ? 'justify-center' : '']"
         @drop.prevent="handleDrop"
         @dragover.prevent="onDragOver"
@@ -103,7 +98,7 @@ onMounted(() => {
                 <div
                     class="rounded-xl border-2 border-dotted border-gray-300 p-12 text-gray-700 lg:p-16"
                 >
-                    Drop Files here to upload
+                    Drop Files here to upload!
                 </div>
             </div>
         </template>
@@ -111,29 +106,7 @@ onMounted(() => {
             <slot />
             <ErrorDialog />
             <FormProgress :form="fileUploadForm" />
+            <Notification />
         </template>
     </SidebarInset>
-    <main
-        v-else
-        class="mx-auto flex h-[calc(100vh-65px)] w-full max-w-7xl flex-col overflow-hidden rounded-xl px-4 relative"
-        :class="[className, dragOver ? 'justify-center' : '']"
-        @drop.prevent="handleDrop"
-        @dragover.prevent="onDragOver"
-        @dragleave.prevent="onDragLeave"
-    >
-        <template v-if="dragOver">
-            <div class="flex w-full items-center justify-center">
-                <div
-                    class="rounded-xl border-2 border-dotted border-gray-300 p-12 text-gray-700 lg:p-16"
-                >
-                    Drop Files here to upload
-                </div>
-            </div>
-        </template>
-        <template v-else>
-            <slot />
-            <ErrorDialog />
-            <FormProgress :form="fileUploadForm" />
-        </template>
-    </main>
 </template>
