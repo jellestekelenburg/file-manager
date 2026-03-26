@@ -26,7 +26,6 @@ watch(isOpen, (open) => {
     }
 });
 
-console.log(isOpen.value);
 </script>
 
 <template>

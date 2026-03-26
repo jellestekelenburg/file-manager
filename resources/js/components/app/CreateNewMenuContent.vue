@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { nextTick } from 'vue';
 import FileUploadMenuItem from '@/components/app/FileUploadMenuItem.vue';
 import FolderUploadMenuItem from '@/components/app/FolderUploadMenuItem.vue';
 
@@ -16,7 +15,7 @@ const emit = defineEmits<{
 
 <template>
     <component
-        :is="itemComponent"
+        :is="props.itemComponent"
         @select="emit('create-folder-select')"
         class="cursor-pointer rounded-sm p-2 text-sm hover:bg-gray-100"
     >
@@ -25,8 +24,8 @@ const emit = defineEmits<{
 
     <div class="mb-2 border-b border-gray-200 pb-2 dark:border-gray-700"></div>
 
-    <FileUploadMenuItem :item-component="itemComponent" />
-    <FolderUploadMenuItem :item-component="itemComponent" />
+    <FileUploadMenuItem :item-component="props.itemComponent" />
+    <FolderUploadMenuItem :item-component="props.itemComponent" />
 </template>
 
 <style scoped></style>

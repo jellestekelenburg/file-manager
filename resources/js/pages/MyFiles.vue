@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import BreadCrumbs from '@/components/app/BreadCrumbs.vue';
 import CreateFolderModal from '@/components/app/CreateFolderModal.vue';
+import CreateNewContextMenu from '@/components/app/createNewContextMenu.vue';
 import CreateNewDropdown from '@/components/app/CreateNewDropdown.vue';
 import DeleteFilesButton from '@/components/app/DeleteFilesButton.vue';
 import DownloadFilesButton from '@/components/app/DownloadFilesButton.vue';
@@ -12,7 +13,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { httpGet } from '@/composables/httpHelper';
 import FileLayout from '@/layouts/FileLayout.vue';
 import { myFiles } from '@/routes';
-import CreateNewContextMenu from '@/components/app/createNewContextMenu.vue';
 
 type FileListItem = {
     id: number;
@@ -50,6 +50,7 @@ const allFiles = ref({
 const isLoadingMore = ref(false);
 const allSelected = ref(false);
 const createFolderModal = ref(false);
+const lastSelectedFile = ref(0);
 const selected = ref<Record<number, boolean>>({});
 const selectedIds = computed(() =>
     Object.entries(selected.value)
@@ -103,8 +104,38 @@ function onSelectAllChange() {
     });
 }
 
-function toggleFileSelect(file: FileListItem) {
+function toggleFileSelect(
+    file: FileListItem,
+    index: number,
+    isShiftPressed: boolean,
+) {
     selected.value[file.id] = !selected.value[file.id];
+
+    console.log(isShiftPressed);
+
+    if (
+        isShiftPressed &&
+        lastSelectedFile.value !== index &&
+        index - lastSelectedFile.value !== -1 &&
+        index - lastSelectedFile.value !== 1
+    ) {
+        if (index - lastSelectedFile.value !== 1) {
+            const min = Math.min(index, lastSelectedFile.value);
+            const max = Math.max(index, lastSelectedFile.value);
+
+            console.log(min, max)
+
+            for (let i = min; i < max; i++) {
+                let fileId = document.querySelector(`[data-index="${i}"]`)
+                    .dataset.key;
+
+                console.log(fileId);
+                if (Number(fileId)) {
+                    selected.value[fileId] = true;
+                }
+            }
+        }
+    }
 
     if (!selected.value[file.id]) {
         allSelected.value = false;
@@ -120,6 +151,8 @@ function toggleFileSelect(file: FileListItem) {
 
         allSelected.value = checked;
     }
+
+    lastSelectedFile.value = index;
 }
 
 function onDelete() {
@@ -238,10 +271,18 @@ onBeforeUnmount(() => {
                         </thead>
                         <tbody>
                             <tr
-                                v-for="file of allFiles.data"
+                                v-for="(file, index) of allFiles.data"
                                 :key="file.id"
+                                :data-index="index"
+                                :data-key="file.id"
                                 @dblclick="openFolder(file)"
-                                @click="toggleFileSelect(file)"
+                                @click="
+                                    toggleFileSelect(
+                                        file,
+                                        index,
+                                        $event.shiftKey,
+                                    )
+                                "
                                 class="cursor-pointer transition duration-300 ease-in-out select-none not-last:border-b"
                                 :class="
                                     selected[file.id] || allSelected

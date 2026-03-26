@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type * as events from 'node:events';
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { emitter, FILE_UPLOAD_STARTED } from '@/composables/event-bus';
 
 const props = defineProps<{
@@ -14,7 +13,7 @@ function onChange(ev: events) {
 <template>
     <component
         component
-        :is="itemComponent"
+        :is="props.itemComponent"
         class="relative cursor-pointer rounded-sm p-2 text-sm hover:bg-gray-100"
     >
         Upload New Folder

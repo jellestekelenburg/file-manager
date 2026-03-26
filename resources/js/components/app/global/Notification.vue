@@ -10,7 +10,6 @@ function close() {
     show.value = false;
     type.value = '';
     message.value = '';
-    console.log(show.value);
 }
 
 onMounted(() => {
