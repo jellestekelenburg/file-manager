@@ -18,10 +18,8 @@ use Inertia\Inertia;
 
 class FileController extends Controller
 {
-    public function myFiles(Request $request, StorageUserService $storageService, ?string $folder = null)
+    public function myFiles(Request $request, ?string $folder = null)
     {
-        $storage = $storageService->getCachedOrRecalculate(Auth::user());
-
         if ($folder) {
             $folder = File::query()
                 ->where('created_by', Auth::id())
@@ -46,7 +44,7 @@ class FileController extends Controller
         $ancestors = FileResource::collection([...$folder->ancestors, $folder]);
         $folder = new FileResource($folder);
 
-        return Inertia::render('MyFiles', compact('files', 'folder', 'ancestors', 'storage'));
+        return Inertia::render('MyFiles', compact('files', 'folder', 'ancestors'));
     }
 
     public function createFolder(StoreFolderRequest $request): RedirectResponse

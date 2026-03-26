@@ -334,10 +334,6 @@ onBeforeUnmount(() => {
                     <div ref="loadMoreIntersect"></div>
                 </div>
             </CreateNewContextMenu>
-
-            <div class="shrink-0 px-4 py-2">
-                <UserStorage :storage="storage"></UserStorage>
-            </div>
         </div>
     </FileLayout>
 </template>

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import UserInfo from '@/components/UserInfo.vue';
 import UserMenuContent from './UserMenuContent.vue';
+import UserStorage from '@/components/app/UserStorage.vue';
 
 const page = usePage();
 const user = page.props.auth.user;
@@ -51,4 +52,5 @@ const { isMobile, state } = useSidebar();
             </DropdownMenu>
         </SidebarMenuItem>
     </SidebarMenu>
+    <UserStorage />
 </template>

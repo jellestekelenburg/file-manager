@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\UserStorage;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -10,6 +11,8 @@ Route::get('/', function () {
         'canRegister' => Features::enabled(Features::registration()),
     ]);
 })->name('home');
+
+Route::get('api/storage', UserStorage::class)->middleware('throttle:20,1')->name('api.storage');
 
 Route::controller(FileController::class)
     ->middleware(['auth', 'verified'])->group(function () {
