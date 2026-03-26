@@ -3,13 +3,20 @@ import type * as events from 'node:events';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { emitter, FILE_UPLOAD_STARTED } from '@/composables/event-bus';
 
+const props = defineProps<{
+    itemComponent: any;
+}>();
 function onChange(ev: events) {
     emitter.emit(FILE_UPLOAD_STARTED, ev.target.files);
 }
 </script>
 
 <template>
-    <DropdownMenuItem>
+    <component
+        component
+        :is="itemComponent"
+        class="relative cursor-pointer rounded-sm p-2 text-sm hover:bg-gray-100"
+    >
         Upload New Folder
 
         <input
@@ -20,7 +27,7 @@ function onChange(ev: events) {
             directory
             webkitdirectory
         />
-    </DropdownMenuItem>
+    </component>
 </template>
 
 <style scoped></style>

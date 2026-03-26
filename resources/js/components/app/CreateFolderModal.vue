@@ -91,7 +91,7 @@ function closeModal() {
                     :variant="'default'"
                     :disabled="form.processing"
                     :class="{ 'opacity-25': form.processing }"
-                    >Submit</Button
+                    >Create folder</Button
                 >
                 <Button @click="closeModal" :variant="'secondary'">
                     Close

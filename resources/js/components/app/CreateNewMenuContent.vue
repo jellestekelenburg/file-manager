@@ -1,0 +1,32 @@
+<script setup lang="ts">
+import { nextTick } from 'vue';
+import FileUploadMenuItem from '@/components/app/FileUploadMenuItem.vue';
+import FolderUploadMenuItem from '@/components/app/FolderUploadMenuItem.vue';
+
+const props = defineProps<{
+    itemComponent: any;
+}>();
+
+const emit = defineEmits<{
+    (event: 'create-folder'): void;
+    (event: 'close'): void;
+    (event: 'create-folder-select'): void;
+}>();
+</script>
+
+<template>
+    <component
+        :is="itemComponent"
+        @select="emit('create-folder-select')"
+        class="cursor-pointer rounded-sm p-2 text-sm hover:bg-gray-100"
+    >
+        Create New Folder
+    </component>
+
+    <div class="mb-2 border-b border-gray-200 pb-2 dark:border-gray-700"></div>
+
+    <FileUploadMenuItem :item-component="itemComponent" />
+    <FolderUploadMenuItem :item-component="itemComponent" />
+</template>
+
+<style scoped></style>

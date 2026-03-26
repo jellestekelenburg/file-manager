@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue';
-import FileUploadMenuItem from '@/components/app/FileUploadMenuItem.vue';
-import FolderUploadMenuItem from '@/components/app/FolderUploadMenuItem.vue';
+import { ref } from 'vue';
+import CreateNewMenuContent from '@/components/app/CreateNewMenuContent.vue';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -24,16 +23,6 @@ const emit = defineEmits<{
 }>();
 
 const isOpen = ref(false);
-
-function handleCreateFolderSelect(event: Event) {
-    event.preventDefault();
-    isOpen.value = false;
-
-    // Open de modal pas nadat de dropdown volledig gesloten is.
-    nextTick(() => {
-        requestAnimationFrame(() => emit('create-folder'));
-    });
-}
 </script>
 
 <template>
@@ -44,14 +33,11 @@ function handleCreateFolderSelect(event: Event) {
             </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-42">
-            <DropdownMenuItem @select="handleCreateFolderSelect">
-                Create new folder
-            </DropdownMenuItem>
-            <div
-                class="mb-2 border-b border-gray-200 pb-2 dark:border-gray-700"
-            ></div>
-            <FileUploadMenuItem />
-            <FolderUploadMenuItem />
+            <CreateNewMenuContent
+                :item-component="DropdownMenuItem"
+                @close="isOpen = false"
+                @create-folder="emit('create-folder')"
+            />
         </DropdownMenuContent>
     </DropdownMenu>
 </template>

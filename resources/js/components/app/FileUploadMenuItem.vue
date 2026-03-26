@@ -3,13 +3,20 @@ import type * as events from 'node:events';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { emitter, FILE_UPLOAD_STARTED } from '@/composables/event-bus';
 
+const props = defineProps<{
+    itemComponent: any;
+}>();
 function onChange(ev: events) {
     emitter.emit(FILE_UPLOAD_STARTED, ev.target.files);
 }
 </script>
 
 <template>
-    <DropdownMenuItem class="relative">
+    <component
+        component
+        :is="itemComponent"
+        class="relative cursor-pointer rounded-sm p-2 text-sm hover:bg-gray-100"
+    >
         Upload File(s)
 
         <input
@@ -18,7 +25,7 @@ function onChange(ev: events) {
             class="absolute top-0 right-0 bottom-0 left-0 cursor-pointer opacity-0"
             multiple
         />
-    </DropdownMenuItem>
+    </component>
 </template>
 
 <style scoped></style>
