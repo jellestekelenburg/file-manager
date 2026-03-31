@@ -11,7 +11,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import {
-    showErrorDialog,
+    showErrorNotification,
     showSuccessNotification,
 } from '@/composables/event-bus';
 import file from '@/routes/file';
@@ -36,7 +36,9 @@ const deleteFilesForm = useForm<{
 
 function clickOnDelete() {
     if (!props.deleteAll && !(props.deleteIds?.length ?? 0)) {
-        showErrorDialog('Please select at least one file or folder to delete');
+        showErrorNotification(
+            'Please select at least one file or folder to delete',
+        );
         return;
     }
     showModal.value = true;

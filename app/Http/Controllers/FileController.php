@@ -28,6 +28,11 @@ class FileController extends Controller
         } else {
             $folder = $this->getRoot();
         }
+
+        // $cache_key = 'Files_'.Auth::id().$folder->name.'page_'.$request->page;
+        // todo: cache files and clear cache when change in folder, maybe save on folder so we can
+        // clear folder and touch (extend) cache when revisit before cache expire
+
         $files = File::query()
             ->where('parent_id', $folder->id)
             ->where('created_by', Auth::id())

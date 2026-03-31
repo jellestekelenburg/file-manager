@@ -2,13 +2,13 @@
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import FormProgress from '@/components/app/FormProgress.vue';
-import ErrorDialog from '@/components/app/global/ErrorDialog.vue';
 import Notification from '@/components/app/global/Notification.vue';
 import { SidebarInset } from '@/components/ui/sidebar';
 import {
     emitter,
     FILE_UPLOAD_STARTED,
-    showErrorDialog,
+    showErrorNotification,
+    showSuccessNotification,
 } from '@/composables/event-bus';
 import file from '@/routes/file';
 
@@ -62,7 +62,11 @@ function uploadFiles(files: any) {
     fileUploadForm.relative_paths = [...files].map((f) => f.webkitRelativePath);
 
     fileUploadForm.post(file.store().url, {
-        onSuccess: () => {},
+        onSuccess: () => {
+            showSuccessNotification(
+                `${files.length} files have been uploaded.`,
+            );
+        },
         onError: (errors) => {
             let message = '';
 
@@ -72,7 +76,7 @@ function uploadFiles(files: any) {
                 message = 'Error during file upload, please try again.';
             }
 
-            showErrorDialog(message);
+            showErrorNotification(message);
         },
         onFinish: () => {
             fileUploadForm.clearErrors();
@@ -104,7 +108,6 @@ onMounted(() => {
         </template>
         <template v-else>
             <slot />
-            <ErrorDialog />
             <FormProgress :form="fileUploadForm" />
             <Notification />
         </template>

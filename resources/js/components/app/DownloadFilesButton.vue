@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { DownloadCloudIcon } from 'lucide-vue-next';
-import { showErrorDialog } from '@/composables/event-bus';
+import {
+    showErrorNotification,
+} from '@/composables/event-bus';
 import { httpGet } from '@/composables/httpHelper';
 import file from '@/routes/file';
 
@@ -14,13 +16,14 @@ const page = usePage();
 
 function downloadFiles() {
     if (!props.downloadAll && !(props.downloadIds?.length ?? 0)) {
-        showErrorDialog('Please select at least one file or folder to download');
+        showErrorNotification(
+            'Please select at least one file or folder to download',
+        );
         return;
     }
 
     const p = new URLSearchParams();
     const parentId = page.props.folder?.id;
-
 
     p.append('parent_id', String(parentId));
 
@@ -35,7 +38,7 @@ function downloadFiles() {
     httpGet(file.download().url + '?' + p.toString())
         .then((response) => {
             if (response.message) {
-                showErrorDialog(response.message);
+                showErrorNotification(response.message);
                 return;
             }
 
@@ -50,7 +53,9 @@ function downloadFiles() {
             a.click();
         })
         .catch(() => {
-            showErrorDialog('Error during file download, please try again.');
+            showErrorNotification(
+                'Error during file download, please try again.',
+            );
         });
 }
 </script>

@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { CircleCheck, CircleX } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
 import { emitter, SHOW_NOTIFICATION } from '@/composables/event-bus';
 
 const show = ref(false);
-const type = ref('success');
+const type = ref<'success' | 'error' | ''>('success');
 const message = ref('');
+
+const icon = computed(() => (type.value === 'error' ? CircleX : CircleCheck));
+const iconClass = computed(() =>
+    type.value === 'error' ? 'text-red-600' : 'text-green-600',
+);
 
 function close() {
     show.value = false;
@@ -13,13 +19,14 @@ function close() {
 }
 
 onMounted(() => {
+    let timeout: number | undefined;
     emitter.on(SHOW_NOTIFICATION, ({ type: t, message: msg }) => {
         show.value = true;
         type.value = t;
         message.value = msg;
 
-        console.log(show.value);
-        setTimeout(() => {
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(() => {
             close();
         }, 5000);
     });
@@ -37,13 +44,16 @@ onMounted(() => {
     >
         <div
             v-if="show"
-            class="fixed bottom-4 left-4 w-50 rounded-sm bg-white px-4 py-2 text-gray-600 border shadow-md z-[999]"
-            :class="{
-                'border-emerald-200': type === 'success',
-                'border-red-200': type === 'error',
-            }"
+            class="fixed bottom-4 left-4 z-999 flex w-70 max-w-full items-center gap-2 rounded-sm border border-gray-400 bg-white px-4 py-3 shadow-md"
         >
-            {{ message }}
+            <component
+                :is="icon"
+                :class="iconClass"
+                class="mt-0.5 size-5 shrink-0"
+            />
+            <p class="text-sm leading-5">
+                {{ message }}
+            </p>
         </div>
     </transition>
 </template>

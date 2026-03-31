@@ -8,7 +8,6 @@ import CreateNewDropdown from '@/components/app/CreateNewDropdown.vue';
 import DeleteFilesButton from '@/components/app/DeleteFilesButton.vue';
 import DownloadFilesButton from '@/components/app/DownloadFilesButton.vue';
 import FileIcon from '@/components/app/FileIcon.vue';
-import UserStorage from '@/components/app/UserStorage.vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { httpGet } from '@/composables/httpHelper';
 import FileLayout from '@/layouts/FileLayout.vue';
