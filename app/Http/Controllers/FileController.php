@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\FilesActionsRequest;
 use App\Http\Requests\StoreFileRequest;
 use App\Http\Requests\StoreFolderRequest;
+use App\Http\Requests\TrashFilesRequest;
 use App\Http\Resources\FileResource;
 use App\Models\File;
 use App\Services\StorageUserService;
@@ -50,6 +51,23 @@ class FileController extends Controller
         $folder = new FileResource($folder);
 
         return Inertia::render('MyFiles', compact('files', 'folder', 'ancestors'));
+    }
+
+    public function trash(Request $request)
+    {
+        $files = File::onlyTrashed()
+            ->where('created_by', Auth::id())
+            ->orderBy('is_folder', 'desc')
+            ->orderBy('files.deleted_at', 'desc')
+            ->paginate(10);
+
+        $files = FileResource::collection($files);
+
+        if ($request->wantsJson()) {
+            return $files;
+        }
+
+        return Inertia::render('Trash', compact('files'));
     }
 
     public function createFolder(StoreFolderRequest $request): RedirectResponse
@@ -148,14 +166,14 @@ class FileController extends Controller
             $children = $parent->children;
 
             foreach ($children as $child) {
-                $child->delete();
+                $child->moveToTrash();
             }
         }
 
         foreach ($data['ids'] ?? [] as $id) {
             $file = File::find($id);
             if ($file) {
-                $file->delete();
+                $file->moveToTrash();
             }
         }
 
@@ -208,4 +226,22 @@ class FileController extends Controller
             'filename' => $filename,
         ];
     }
+
+    public function restore(TrashFilesRequest $request)
+    {
+        $data = $request->validated();
+        if ($data['all']) {
+            $children = File::onlyTrashed()->get();
+        } else {
+            $ids = $data['ids'] ?? [];
+            $children = File::query()->withoutGlobalScopes()->whereIn('id', $ids)->get();
+        }
+        foreach ($children as $child) {
+            $child->restore();
+        }
+
+        return to_route('trash');
+    }
+
+    public function deleteForever() {}
 }

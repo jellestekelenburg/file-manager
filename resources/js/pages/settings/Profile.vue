@@ -12,7 +12,6 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import { type BreadcrumbItem } from '@/types';
-import UserStorage from '@/components/app/UserStorage.vue';
 
 type Props = {
     mustVerifyEmail: boolean;

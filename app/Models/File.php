@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\SizeFormatter;
 use App\Traits\HasCreatorAndUpdater;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -54,6 +55,12 @@ class File extends Model
     {
         return $this->created_by == $userId;
     }
+    public function moveToTrash()
+    {
+        $this->deleted_at = Carbon::now();
+
+        return $this->save();
+    }
 
     protected static function boot(): void
     {
@@ -76,4 +83,6 @@ class File extends Model
 //            // CHECK: (5:32:30 (timestamp YT))
 //        });
     }
+
+
 }

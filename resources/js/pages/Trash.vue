@@ -1,17 +1,13 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import BreadCrumbs from '@/components/app/BreadCrumbs.vue';
 import CreateFolderModal from '@/components/app/CreateFolderModal.vue';
 import CreateNewContextMenu from '@/components/app/createNewContextMenu.vue';
-import CreateNewDropdown from '@/components/app/CreateNewDropdown.vue';
-import DeleteFilesButton from '@/components/app/DeleteFilesButton.vue';
-import DownloadFilesButton from '@/components/app/DownloadFilesButton.vue';
 import FileIcon from '@/components/app/FileIcon.vue';
+import RestoreFilesButton from '@/components/app/RestoreFilesButton.vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { httpGet } from '@/composables/httpHelper';
 import FileLayout from '@/layouts/FileLayout.vue';
-import { myFiles } from '@/routes';
 
 type FileListItem = {
     id: number;
@@ -60,13 +56,6 @@ const selectedIds = computed(() =>
 const currentFolderId = computed(() => props.folder?.id ?? null);
 let observer: IntersectionObserver | null = null;
 
-function openFolder(file: FileListItem): void {
-    if (!file.is_folder || !file.path) {
-        return;
-    }
-
-    router.visit(myFiles.get({ folder: file.path }));
-}
 function mergeIncomingTopPage(
     incoming: FileListItem[],
     previousTopPage: FileListItem[] = [],
@@ -110,7 +99,6 @@ function toggleFileSelect(
 ) {
     selected.value[file.id] = !selected.value[file.id];
 
-
     if (
         isShiftPressed &&
         lastSelectedFile.value !== index &&
@@ -121,12 +109,13 @@ function toggleFileSelect(
             const min = Math.min(index, lastSelectedFile.value);
             const max = Math.max(index, lastSelectedFile.value);
 
-            console.log(min, max)
+            console.log(min, max);
 
             for (let i = min; i < max; i++) {
                 const fileId = document.querySelector(`[data-index="${i}"]`)
                     .dataset.key;
 
+                console.log(fileId);
                 if (Number(fileId)) {
                     selected.value[fileId] = true;
                 }
@@ -150,11 +139,6 @@ function toggleFileSelect(
     }
 
     lastSelectedFile.value = index;
-}
-
-function onDelete() {
-    allSelected.value = false;
-    selected.value = {};
 }
 
 function showCreateFolderModal() {
@@ -212,21 +196,12 @@ onBeforeUnmount(() => {
             <div
                 class="flex shrink-0 items-center justify-between border-b bg-white px-4 dark:bg-gray-800"
             >
-                <BreadCrumbs :ancestors="ancestors"></BreadCrumbs>
-                <div class="inline-flex gap-x-2">
-                    <DeleteFilesButton
-                        :delete-all="allSelected"
-                        :delete-ids="selectedIds"
-                        @delete="onDelete"
-                    ></DeleteFilesButton>
-                    <DownloadFilesButton
-                        :download-all="allSelected"
-                        :download-ids="selectedIds"
-                    ></DownloadFilesButton>
-                    <CreateNewDropdown
-                        button-class="h-9"
-                        @create-folder="showCreateFolderModal"
-                    />
+                <div></div>
+                <div class="inline-flex gap-x-2 py-4">
+                    <RestoreFilesButton
+                        :restore-all="allSelected"
+                        :restore-ids="selectedIds"
+                    ></RestoreFilesButton>
                 </div>
             </div>
 
@@ -252,12 +227,7 @@ onBeforeUnmount(() => {
                                 <th
                                     class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
                                 >
-                                    Owner
-                                </th>
-                                <th
-                                    class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
-                                >
-                                    Last modified
+                                    Path
                                 </th>
                                 <th
                                     class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
@@ -272,7 +242,6 @@ onBeforeUnmount(() => {
                                 :key="file.id"
                                 :data-index="index"
                                 :data-key="file.id"
-                                @dblclick="openFolder(file)"
                                 @click="
                                     toggleFileSelect(
                                         file,
@@ -305,12 +274,7 @@ onBeforeUnmount(() => {
                                 <td
                                     class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
                                 >
-                                    {{ file.owner }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"
-                                >
-                                    {{ file.updated_at }}
+                                    {{ file.path }}
                                 </td>
                                 <td
                                     class="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white"

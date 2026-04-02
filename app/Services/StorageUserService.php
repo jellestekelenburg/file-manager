@@ -54,7 +54,7 @@ class StorageUserService
 
     public function recalculate(User $user): array
     {
-        $used = (int) File::query()
+        $used = (int) File::query()->withoutGlobalScopes()
             ->where('created_by', $user->id)
             ->where('is_folder', false)
             ->sum('size');

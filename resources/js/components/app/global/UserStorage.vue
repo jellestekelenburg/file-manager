@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { onMounted, onUnmounted, ref } from 'vue';
+import { showErrorNotification } from '@/composables/event-bus';
 
 type StorageData = {
     used_bytes: number;
@@ -23,7 +24,7 @@ function storageHide() {
 
 const storage = ref<StorageData | null>(null);
 const loading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 let isFetching = false;
 
 const fetchData = async () => {
@@ -35,14 +36,11 @@ const fetchData = async () => {
         error.value = null;
 
         const response = await axios.get('/api/storage');
-
         storage.value = response.data;
-
-        console.log('storage: ', storage.value);
-        console.log('data', response.data);
     } catch (err) {
         error.value = 'Er ging iets mis bij het ophalen van data.';
-        console.error(err);
+        showErrorNotification(error.value);
+        console.log(err);
     } finally {
         loading.value = false;
         isFetching = false;
@@ -73,8 +71,13 @@ onUnmounted(() => {
         <p class="mb-1 text-sm">My cloud storage</p>
         <div class="h-1 w-full overflow-hidden rounded-full bg-gray-200">
             <div
-                class="h-1 bg-blue-600"
+                class="h-1"
                 :style="{ width: storage.percentage + '%' }"
+                :class="{
+                    'bg-blue-500': storage.percentage < 80,
+                    'bg-orange-400': storage.percentage >= 80 && storage.percentage < 95,
+                    'bg-red-500': storage.percentage >= 95
+                }"
             ></div>
         </div>
         <div

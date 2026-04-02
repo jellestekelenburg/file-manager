@@ -13,7 +13,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { myFiles } from '@/routes';
+import { myFiles, trash } from '@/routes';
 import { type NavItem } from '@/types';
 import AppLogo from './AppLogo.vue';
 
@@ -35,7 +35,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Trash',
-        href: '/',
+        href: trash(),
         icon: Trash2,
     },
 ];

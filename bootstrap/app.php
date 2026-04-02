@@ -24,4 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
+    })
+    ->withSchedule(function (Schedule $schedule) { // 👈 dit blok toevoegen
+        $schedule->command('files:remove-temp-public-files')
+            ->hourly();
     })->create();
