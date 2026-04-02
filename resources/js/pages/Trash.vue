@@ -112,9 +112,10 @@ function toggleFileSelect(
             console.log(min, max);
 
             for (let i = min; i < max; i++) {
-                const fileId = document.querySelector(`[data-index="${i}"]`)
+                const fileId = <null|number>document.querySelector(`[data-index="${i}"]`)
                     .dataset.key;
 
+                if(!fileId) return;
                 console.log(fileId);
                 if (Number(fileId)) {
                     selected.value[fileId] = true;
