@@ -21,7 +21,7 @@ class RemoveTempFiles extends Command
         $this->removeFiles();
         $this->removeZips();
 
-        return 0;
+        return self::SUCCESS;
     }
 
     private function removeFiles(): void
