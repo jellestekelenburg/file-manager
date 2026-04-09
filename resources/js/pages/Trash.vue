@@ -8,6 +8,7 @@ import RestoreFilesButton from '@/components/app/RestoreFilesButton.vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { httpGet } from '@/composables/httpHelper';
 import FileLayout from '@/layouts/FileLayout.vue';
+import DeleteForeverButton from '@/components/app/DeleteForeverButton.vue';
 
 type FileListItem = {
     id: number;
@@ -112,13 +113,16 @@ function toggleFileSelect(
             console.log(min, max);
 
             for (let i = min; i < max; i++) {
-                const fileId = <null|number>document.querySelector(`[data-index="${i}"]`)
-                    .dataset.key;
+                const fileId = document.querySelector<HTMLElement>(
+                    `[data-index="${i}"]`,
+                )?.dataset?.key;
 
-                if(!fileId) return;
-                console.log(fileId);
-                if (Number(fileId)) {
-                    selected.value[fileId] = true;
+                if (!fileId) return;
+
+                const numericFileId = Number(fileId);
+
+                if (!Number.isNaN(numericFileId)) {
+                    selected.value[numericFileId] = true;
                 }
             }
         }
@@ -203,6 +207,11 @@ onBeforeUnmount(() => {
                         :restore-all="allSelected"
                         :restore-ids="selectedIds"
                     ></RestoreFilesButton>
+                    <DeleteForeverButton
+                        :delete-all="allSelected"
+                        :delete-ids="selectedIds"
+                    >
+                    </DeleteForeverButton>
                 </div>
             </div>
 

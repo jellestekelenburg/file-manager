@@ -14,6 +14,11 @@ class StorageUserService
         return "storage:stats:{$user->id}";
     }
 
+    public function clearCache(User $user): void
+    {
+        Cache::forget($this->cacheKey($user));
+    }
+
     private function makeStats(int $used, int $max): array
     {
         return [

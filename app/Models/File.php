@@ -62,6 +62,23 @@ class File extends Model
         return $this->save();
     }
 
+    public function deleteForever(): void
+    {
+        $this->deleteFilesFromStorage([$this]);
+        $this->forceDelete();
+    }
+
+    public function deleteFilesFromStorage($files): void
+    {
+        foreach ($files as $file) {
+            if ($file->is_folder) {
+                $this->deleteFilesFromStorage($file->children);
+            } else {
+                Storage::delete($file->storage_path);
+            }
+        }
+    }
+
     protected static function boot(): void
     {
         parent::boot();
@@ -73,15 +90,6 @@ class File extends Model
 
             $model->path = (! $model->parent->isRoot() ? $model->parent->path.'/' : '').Str::slug($model->name);
         });
-
-//        static::deleted(function (File $model) {
-//            if (! $model->is_folder) {
-//                Storage::delete($model->path);
-//            }
-//            // In this instance, Files get removed IF selected, selected folder ALSO get removed
-//            // BUT files inside a removed folder will NOT be deleted, TODO: Fix this issue
-//            // CHECK: (5:32:30 (timestamp YT))
-//        });
     }
 
 

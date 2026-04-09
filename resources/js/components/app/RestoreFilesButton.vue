@@ -55,8 +55,6 @@ function onrestoreConfirm() {
         form.ids = props.restoreIds ?? [];
     }
 
-    console.log(form.all, form.ids)
-
     form.post(file.restore().url, {
         onSuccess: () => {
             showModal.value = false;

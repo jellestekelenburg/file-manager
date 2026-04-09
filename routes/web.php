@@ -24,6 +24,7 @@ Route::controller(FileController::class)
         Route::post('/file', 'store')->name('file.store');
         Route::delete('file', 'destroy')->name('file.delete');
         Route::post('/file/restore', 'restore')->name('file.restore');
+        Route::delete('/file/destroy', 'deleteForever')->name('file.destroy');
         Route::get('file/download', 'download')->name('file.download');
     });
 

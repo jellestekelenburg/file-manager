@@ -19,6 +19,12 @@ use Inertia\Inertia;
 
 class FileController extends Controller
 {
+    protected StorageUserService $storageUserService;
+    public function __construct(StorageUserService $storageUserService)
+    {
+        $this->storageUserService = $storageUserService;
+    }
+
     public function myFiles(Request $request, ?string $folder = null)
     {
         if ($folder) {
@@ -75,7 +81,7 @@ class FileController extends Controller
         $data = $request->validated();
         $parent = $request->parent;
 
-        if (! $parent) {
+        if (!$parent) {
             $parent = $this->getRoot();
         }
 
@@ -97,11 +103,11 @@ class FileController extends Controller
         $user = $request->user();
         $fileTree = $request->file_tree;
 
-        if (! $parent) {
+        if (!$parent) {
             $parent = $this->getRoot();
         }
 
-        if (! empty($fileTree)) {
+        if (!empty($fileTree)) {
             $totalUploadedBytes = $this->saveFileTree($fileTree, $parent, $user);
         } else {
             foreach ($data['files'] as $file) {
@@ -140,10 +146,10 @@ class FileController extends Controller
     private function saveFile($file, $user, $parent): int
     {
 
-        $size = (int) $file->getSize();
+        $size = (int)$file->getSize();
 
         /* @var UploadedFile $file */
-        $path = $file->store('/files'.$user->id);
+        $path = $file->store('/files' . $user->id);
 
         $model = new File;
         $model->is_folder = false;
@@ -188,7 +194,7 @@ class FileController extends Controller
         $all = $data['all'] ?? false;
         $ids = $data['ids'] ?? [];
 
-        if (! $all && empty($ids)) {
+        if (!$all && empty($ids)) {
             return [
                 'message' => 'Please select at least one file to download.',
             ];
@@ -196,7 +202,7 @@ class FileController extends Controller
 
         if ($all) {
             $url = $zipCreator->createZip($parent->children);
-            $filename = $parent->name.'.zip';
+            $filename = $parent->name . '.zip';
         } else {
             if (count($ids) == 1) {
                 $file = File::find($ids[0]);
@@ -207,7 +213,7 @@ class FileController extends Controller
                         ];
                     }
                     $url = $zipCreator->createZip($file->children);
-                    $filename = $file->name.'.zip';
+                    $filename = $file->name . '.zip';
                 } else {
                     $basename = pathinfo($file->storage_path, PATHINFO_BASENAME);
                     Storage::disk('public')->put($basename, Storage::get($file->storage_path));
@@ -217,7 +223,7 @@ class FileController extends Controller
             } else {
                 $file = File::query()->whereIn('id', $ids)->get();
                 $url = $zipCreator->createZip($file);
-                $filename = $parent->name.'.zip';
+                $filename = $parent->name . '.zip';
             }
         }
 
@@ -234,8 +240,9 @@ class FileController extends Controller
             $children = File::onlyTrashed()->get();
         } else {
             $ids = $data['ids'] ?? [];
-            $children = File::query()->withoutGlobalScopes()->whereIn('id', $ids)->get();
+            $children = File::onlyTrashed()->whereIn('id', $ids)->get();
         }
+
         foreach ($children as $child) {
             $child->restore();
         }
@@ -243,5 +250,22 @@ class FileController extends Controller
         return to_route('trash');
     }
 
-    public function deleteForever() {}
+    public function deleteForever(TrashFilesRequest $request)
+    {
+        $data = $request->validated();
+        if ($data['all']) {
+            $children = File::onlyTrashed()->get();
+        } else {
+            $ids = $data['ids'] ?? [];
+            $children = File::onlyTrashed()->whereIn('id', $ids)->get();
+        }
+
+        foreach ($children as $child) {
+            $child->deleteForever();
+        }
+
+        $this->storageUserService->clearCache(Auth::user());
+
+        return to_route('trash');
+    }
 }
