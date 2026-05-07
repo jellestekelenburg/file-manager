@@ -20,6 +20,7 @@ class File extends Model
 
     protected $casts = [
         'is_folder' => 'boolean',
+        'size' => 'integer',
     ];
 
     public function user(): BelongsTo

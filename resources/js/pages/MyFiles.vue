@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import {
+    computed,
+    nextTick,
+    onBeforeUnmount,
+    onMounted,
+    ref,
+    watch,
+} from 'vue';
 import BreadCrumbs from '@/components/app/BreadCrumbs.vue';
 import CreateFolderModal from '@/components/app/CreateFolderModal.vue';
 import CreateNewContextMenu from '@/components/app/createNewContextMenu.vue';
@@ -29,19 +36,42 @@ type Paginated<T> = {
     data: T[];
 };
 
+type SortColumn = 'name' | 'updated_at' | 'size' | null;
+type SortDirection = 'asc' | 'desc';
+
+type SortState = {
+    by: SortColumn;
+    direction: SortDirection;
+};
+
+type TableColumn = {
+    name: string;
+    type: SortColumn;
+};
+
+const table: Record<number, TableColumn> = {
+    1: { name: 'Name', type: 'name' },
+    2: { name: 'Owner', type: null },
+    3: { name: 'Last modified', type: 'updated_at' },
+    4: { name: 'Size', type: 'size' },
+};
+
 const props = withDefaults(
     defineProps<{
         files: Paginated<FileListItem>;
         folder?: FileListItem | null;
         ancestors?: { data: FileListItem[] };
+        sort?: SortState;
         storage?: void;
     }>(),
     {
         folder: null,
         ancestors: () => ({ data: [] }),
+        sort: () => ({ by: 'size', direction: 'desc' }),
     },
 );
-const loadMoreIntersect = ref(null);
+const scrollContainer = ref<HTMLElement | null>(null);
+const loadMoreIntersect = ref<HTMLElement | null>(null);
 const allFiles = ref({
     data: props.files.data,
     next: props.files.links.next,
@@ -56,6 +86,7 @@ const selectedIds = computed(() =>
         .filter((a) => a[1])
         .map((a) => a[0]),
 );
+const sort = computed(() => props.sort);
 
 const currentFolderId = computed(() => props.folder?.id ?? null);
 let observer: IntersectionObserver | null = null;
@@ -67,18 +98,16 @@ function openFolder(file: FileListItem): void {
 
     router.visit(myFiles.get({ folder: file.path }));
 }
-function mergeIncomingTopPage(
-    incoming: FileListItem[],
-    previousTopPage: FileListItem[] = [],
-) {
-    const incomingIds = new Set(incoming.map((file) => file.id));
-    const previousTopPageIds = new Set(previousTopPage.map((file) => file.id));
-    const existingTail = allFiles.value.data.filter(
-        (file) => !incomingIds.has(file.id) && !previousTopPageIds.has(file.id),
-    );
+function replaceFilesFromProps() {
+    allFiles.value = {
+        data: props.files.data,
+        next: props.files.links.next,
+    };
 
-    allFiles.value.data = [...incoming, ...existingTail];
-    allFiles.value.next = props.files.links.next;
+    allSelected.value = false;
+    selected.value = {};
+
+    nextTick(loadMoreIfNeeded);
 }
 
 function loadMore() {
@@ -91,10 +120,30 @@ function loadMore() {
         .then((res) => {
             allFiles.value.data = [...allFiles.value.data, ...res.data];
             allFiles.value.next = res.links.next;
+
+            nextTick(loadMoreIfNeeded);
         })
         .finally(() => {
             isLoadingMore.value = false;
         });
+}
+
+function loadMoreIfNeeded() {
+    if (
+        !scrollContainer.value ||
+        !loadMoreIntersect.value ||
+        allFiles.value.next === null ||
+        isLoadingMore.value
+    ) {
+        return;
+    }
+
+    const scrollRect = scrollContainer.value.getBoundingClientRect();
+    const intersectRect = loadMoreIntersect.value.getBoundingClientRect();
+
+    if (intersectRect.top <= scrollRect.bottom + 250) {
+        loadMore();
+    }
 }
 
 function onSelectAllChange() {
@@ -110,7 +159,6 @@ function toggleFileSelect(
 ) {
     selected.value[file.id] = !selected.value[file.id];
 
-
     if (
         isShiftPressed &&
         lastSelectedFile.value !== index &&
@@ -121,14 +169,15 @@ function toggleFileSelect(
             const min = Math.min(index, lastSelectedFile.value);
             const max = Math.max(index, lastSelectedFile.value);
 
-            console.log(min, max)
-
             for (let i = min; i < max; i++) {
-                const fileId = document.querySelector(`[data-index="${i}"]`)
-                    .dataset.key;
+                const row = document.querySelector<HTMLElement>(
+                    `[data-index="${i}"]`,
+                );
+                const fileId = row?.dataset.key;
+                const numericFileId = Number(fileId);
 
-                if (Number(fileId)) {
-                    selected.value[fileId] = true;
+                if (numericFileId) {
+                    selected.value[numericFileId] = true;
                 }
             }
         }
@@ -152,6 +201,35 @@ function toggleFileSelect(
     lastSelectedFile.value = index;
 }
 
+function toggleSort(column: SortColumn) {
+
+    if(!column) {
+        return
+    }
+
+    const nextDirection: SortDirection =
+        props.sort.by === column && props.sort.direction === 'asc'
+            ? 'desc'
+            : 'asc';
+
+    router.get(
+        myFiles.url(
+            props.folder?.path ? { folder: props.folder.path } : undefined,
+        ),
+        {
+            sortBy: column,
+            sortDirection: nextDirection,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+            only: ['files', 'sort'],
+            onSuccess: () => nextTick(loadMoreIfNeeded),
+        },
+    );
+}
+
 function onDelete() {
     allSelected.value = false;
     selected.value = {};
@@ -168,22 +246,19 @@ watch(
             return;
         }
 
-        allFiles.value = {
-            data: props.files.data,
-            next: props.files.links.next,
-        };
+        replaceFilesFromProps();
     },
 );
 
 watch(
-    () => props.files.data,
-    (incoming, previous = []) => {
-        mergeIncomingTopPage(incoming, previous);
+    () => [props.files.data, props.files.links.next],
+    () => {
+        replaceFilesFromProps();
     },
 );
 
 onMounted(() => {
-    if (!loadMoreIntersect.value) {
+    if (!scrollContainer.value || !loadMoreIntersect.value) {
         return;
     }
 
@@ -192,11 +267,13 @@ onMounted(() => {
             entries.forEach((entry) => entry.isIntersecting && loadMore());
         },
         {
-            rootMargin: '-250px 0px 0px 0px',
+            root: scrollContainer.value,
+            rootMargin: '0px 0px 250px 0px',
         },
     );
 
     observer.observe(loadMoreIntersect.value);
+    nextTick(loadMoreIfNeeded);
 });
 
 onBeforeUnmount(() => {
@@ -231,7 +308,7 @@ onBeforeUnmount(() => {
             </div>
 
             <CreateNewContextMenu @create-folder="showCreateFolderModal">
-                <div class="min-h-0 flex-1 overflow-auto">
+                <div ref="scrollContainer" class="min-h-0 flex-1 overflow-auto">
                     <table class="relative min-w-full">
                         <thead class="border-b">
                             <tr>
@@ -245,24 +322,41 @@ onBeforeUnmount(() => {
                                     </Checkbox>
                                 </th>
                                 <th
-                                    class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
+                                    v-for="(item, code) in table"
+                                    :key="code"
+                                    class="z-10 flex-1 bg-gray-100 px-2 py-2.5 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
+                                    :class="item.type ? 'cursor-pointer' : ''"
+                                    @click="toggleSort(item.type)"
                                 >
-                                    Name
-                                </th>
-                                <th
-                                    class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
-                                >
-                                    Owner
-                                </th>
-                                <th
-                                    class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
-                                >
-                                    Last modified
-                                </th>
-                                <th
-                                    class="sticky top-0 z-10 bg-gray-100 px-6 py-4 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
-                                >
-                                    Size
+                                    <span
+                                        class="rounded-xl px-4 py-1.5 inline-flex items-center"
+                                        :class="
+                                            item.type && sort.by === item.type
+                                                ? 'bg-gray-300'
+                                                : ''
+                                        "
+                                    >
+                                        {{ item.name }}
+
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 640 640"
+                                            class="size-4 inline-block"
+                                            v-if="
+                                                item.type &&
+                                                sort.by === item.type
+                                            "
+                                            :class="
+                                                item.type &&
+                                                sort.by === item.type &&
+                                                sort.direction === 'desc' ? 'rotate-180' : ''
+                                            "
+                                        >
+                                            <path
+                                                d="M337.5 433C328.1 442.4 312.9 442.4 303.6 433L143.5 273C134.1 263.6 134.1 248.4 143.5 239.1C152.9 229.8 168.1 229.7 177.4 239.1L320.4 382.1L463.4 239.1C472.8 229.7 488 229.7 497.3 239.1C506.6 248.5 506.7 263.7 497.3 273L337.3 433z"
+                                            />
+                                        </svg>
+                                    </span>
                                 </th>
                             </tr>
                         </thead>
