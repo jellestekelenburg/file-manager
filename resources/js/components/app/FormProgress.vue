@@ -14,12 +14,14 @@ const props = defineProps<{
 <template>
     <div
         v-if="props.form.progress"
-        class="absolute p-4 right-8 text-end bottom-4 flex w-60 flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg"
+        class="absolute right-8 bottom-4 flex w-60 flex-col rounded-lg border border-gray-200 bg-white p-4 text-end shadow-lg dark:border-gray-700 dark:bg-gray-900"
     >
-        <div class="mb-2 text-sm">Uploading {{ props.form.files?.length ?? 0 }} file(s)</div>
-        <div class="h-1 bg-gray-100 dark:bg-gray-800 rounded-md">
+        <div class="mb-2 text-sm">
+            Uploading {{ props.form.files?.length ?? 0 }} file(s)
+        </div>
+        <div class="h-1 rounded-md bg-gray-100 dark:bg-gray-800">
             <div
-                class="h-full rounded-md bg-gray-900 dark:bg-gray-200 transition-all"
+                class="h-full rounded-md bg-gray-900 transition-all dark:bg-gray-200"
                 :style="{ width: `${props.form.progress?.percentage ?? 0}%` }"
             ></div>
         </div>

@@ -75,8 +75,9 @@ onUnmounted(() => {
                 :style="{ width: storage.percentage + '%' }"
                 :class="{
                     'bg-blue-500': storage.percentage < 80,
-                    'bg-orange-400': storage.percentage >= 80 && storage.percentage < 95,
-                    'bg-red-500': storage.percentage >= 95
+                    'bg-orange-400':
+                        storage.percentage >= 80 && storage.percentage < 95,
+                    'bg-red-500': storage.percentage >= 95,
                 }"
             ></div>
         </div>

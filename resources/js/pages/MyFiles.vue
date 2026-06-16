@@ -202,9 +202,8 @@ function toggleFileSelect(
 }
 
 function toggleSort(column: SortColumn) {
-
-    if(!column) {
-        return
+    if (!column) {
+        return;
     }
 
     const nextDirection: SortDirection =
@@ -324,15 +323,15 @@ onBeforeUnmount(() => {
                                 <th
                                     v-for="(item, code) in table"
                                     :key="code"
-                                    class="z-10 flex-1 bg-gray-100 px-2 py-2.5 text-start text-sm font-medium text-gray-900 dark:bg-gray-700 dark:text-white"
+                                    class="z-10 flex-1 bg-gray-100 px-2 py-2.5 text-start text-sm font-medium text-gray-600 dark:bg-gray-500 dark:text-white"
                                     :class="item.type ? 'cursor-pointer' : ''"
                                     @click="toggleSort(item.type)"
                                 >
                                     <span
-                                        class="rounded-xl px-4 py-1.5 inline-flex items-center"
+                                        class="inline-flex items-center gap-0.5 rounded-xl px-4 py-1.5"
                                         :class="
                                             item.type && sort.by === item.type
-                                                ? 'bg-gray-300'
+                                                ? 'font-black text-gray-950'
                                                 : ''
                                         "
                                     >
@@ -341,7 +340,7 @@ onBeforeUnmount(() => {
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             viewBox="0 0 640 640"
-                                            class="size-4 inline-block"
+                                            class="inline-block size-4 fill-current"
                                             v-if="
                                                 item.type &&
                                                 sort.by === item.type
@@ -349,11 +348,13 @@ onBeforeUnmount(() => {
                                             :class="
                                                 item.type &&
                                                 sort.by === item.type &&
-                                                sort.direction === 'desc' ? 'rotate-180' : ''
+                                                sort.direction === 'desc'
+                                                    ? 'rotate-180'
+                                                    : ''
                                             "
                                         >
                                             <path
-                                                d="M337.5 433C328.1 442.4 312.9 442.4 303.6 433L143.5 273C134.1 263.6 134.1 248.4 143.5 239.1C152.9 229.8 168.1 229.7 177.4 239.1L320.4 382.1L463.4 239.1C472.8 229.7 488 229.7 497.3 239.1C506.6 248.5 506.7 263.7 497.3 273L337.3 433z"
+                                                d="M320.3 461.3L502.9 278.7L525.5 256.1L480.2 210.8L457.6 233.4L320.2 370.8L182.8 233.4L160.2 210.8L114.9 256.1L137.5 278.7L297.5 438.7L320.1 461.3z"
                                             />
                                         </svg>
                                     </span>

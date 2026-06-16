@@ -3,12 +3,12 @@ import { Head } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import CreateFolderModal from '@/components/app/CreateFolderModal.vue';
 import CreateNewContextMenu from '@/components/app/createNewContextMenu.vue';
+import DeleteForeverButton from '@/components/app/DeleteForeverButton.vue';
 import FileIcon from '@/components/app/FileIcon.vue';
 import RestoreFilesButton from '@/components/app/RestoreFilesButton.vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { httpGet } from '@/composables/httpHelper';
 import FileLayout from '@/layouts/FileLayout.vue';
-import DeleteForeverButton from '@/components/app/DeleteForeverButton.vue';
 
 type FileListItem = {
     id: number;

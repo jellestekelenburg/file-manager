@@ -25,7 +25,6 @@ watch(isOpen, (open) => {
         });
     }
 });
-
 </script>
 
 <template>

@@ -118,13 +118,11 @@ const rightNavItems: NavItem[] = [];
                                         rel="noopener noreferrer"
                                         class="flex items-center space-x-2 text-sm font-medium"
                                     >
-
                                         <component
                                             v-if="item.icon"
                                             :is="item.icon"
                                             class="h-5 w-5"
                                         />
-
 
                                         <span>{{ item.title }}</span>
                                     </a>
@@ -140,10 +138,7 @@ const rightNavItems: NavItem[] = [];
 
                 <!-- Desktop Menu -->
                 <div class="hidden h-full lg:flex lg:flex-1">
-                    <AppMainNav
-                        :items="mainNavItems"
-                        variant="desktop"
-                    />
+                    <AppMainNav :items="mainNavItems" variant="desktop" />
                 </div>
 
                 <div class="ml-auto flex items-center space-x-2">
@@ -157,10 +152,8 @@ const rightNavItems: NavItem[] = [];
                             <Search
                                 class="size-5 opacity-80 group-hover:opacity-100"
                             />
-
                         </Button>
-                            <SearchForm :search="search">
-                            </SearchForm>
+                        <SearchForm :search="search"> </SearchForm>
 
                         <div class="hidden space-x-1 lg:flex">
                             <template

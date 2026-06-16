@@ -15,8 +15,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 <template>
     <Head title="Dashboard" />
     <AppLayout :breadcrumbs="breadcrumbs">
-            <div class="flex-1 flex flex-col overflow-hidden">
-                <slot/>
-            </div>
+        <div class="flex flex-1 flex-col overflow-hidden">
+            <slot />
+        </div>
     </AppLayout>
 </template>

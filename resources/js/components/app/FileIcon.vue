@@ -13,7 +13,18 @@ const props = defineProps<{
 }>();
 
 const EXT_GROUPS: Record<string, string[]> = {
-    image: ['png', 'jpg', 'jpeg', 'svg', 'webp', 'tif', 'tiff', 'gif', 'bmp', 'heic'],
+    image: [
+        'png',
+        'jpg',
+        'jpeg',
+        'svg',
+        'webp',
+        'tif',
+        'tiff',
+        'gif',
+        'bmp',
+        'heic',
+    ],
     video: ['mp4', 'mov', 'mkv', 'webm', 'avi', 'm4v'],
     audio: ['mp3', 'wav', 'flac', 'aac', 'm4a', 'ogg'],
     pdf: ['pdf'],

@@ -33,7 +33,10 @@ function showCreateFolderModal() {
 <template>
     <CreateFolderModal v-model="createFolderModal" />
     <nav v-if="props.variant === 'mobile'" class="-mx-3 space-y-1">
-        <CreateNewDropdown button-class="mt-1 w-full justify-start" @create-folder="showCreateFolderModal" />
+        <CreateNewDropdown
+            button-class="mt-1 w-full justify-start"
+            @create-folder="showCreateFolderModal"
+        />
 
         <div class="mb-4"></div>
 
@@ -100,6 +103,9 @@ function showCreateFolderModal() {
             </NavigationMenuList>
         </NavigationMenu>
 
-        <CreateNewDropdown button-class="h-9" @create-folder="showCreateFolderModal" />
+        <CreateNewDropdown
+            button-class="h-9"
+            @create-folder="showCreateFolderModal"
+        />
     </div>
 </template>
