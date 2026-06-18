@@ -5,6 +5,7 @@ A modern cloud-based file management platform built with Laravel, Vue.js, TypeSc
 Inspired by services such as Dropbox and Google Drive, this project focuses on scalable file storage, file sharing and modern full-stack application architecture.
 
 > **Status:** Under active development
+> 
 > Demo: https://file-manager-main-hglekz.laravel.cloud/
 
 ---
