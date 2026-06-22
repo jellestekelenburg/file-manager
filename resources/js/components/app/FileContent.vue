@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm, usePage } from '@inertiajs/vue3';
+import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 import FormProgress from '@/components/app/FormProgress.vue';
 import Notification from '@/components/app/global/Notification.vue';
@@ -11,7 +12,6 @@ import {
     showSuccessNotification,
 } from '@/composables/event-bus';
 import file from '@/routes/file';
-import axios from 'axios';
 
 type Props = {
     variant?: 'header' | 'sidebar';
@@ -66,7 +66,7 @@ async function uploadFiles(files: any) {
     const data = await checkUpload(Array.from(files));
 
     if (!data.ok) {
-        console.log(data)
+        console.log(data);
         showErrorNotification(data.errors?.[0]?.message ?? data.message);
         return;
     }
