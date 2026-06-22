@@ -133,7 +133,8 @@ class FileController extends Controller
             $totalUploadedBytes = $this->saveFileTree($fileTree, $parent, $user);
         } else {
             foreach ($data['files'] as $file) {
-                $totalUploadedBytes = $this->saveFile($file, $user, $parent);
+                // BUG??
+                $totalUploadedBytes += $this->saveFile($file, $user, $parent);
             }
         }
 

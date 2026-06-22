@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\UploadCheckController;
 use App\Http\Controllers\UserStorage;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -13,6 +14,9 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('api/storage', UserStorage::class)->middleware('throttle:20,1')->name('api.storage');
+Route::post('/api/uploads/check', UploadCheckController::class)
+    ->middleware(['auth', 'verified', 'throttle:6,1'])
+    ->name('api.uploads.check');
 
 Route::controller(FileController::class)
     ->middleware(['auth', 'verified'])->group(function () {

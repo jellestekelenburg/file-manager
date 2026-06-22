@@ -11,6 +11,7 @@ import {
     showSuccessNotification,
 } from '@/composables/event-bus';
 import file from '@/routes/file';
+import axios from 'axios';
 
 type Props = {
     variant?: 'header' | 'sidebar';
@@ -56,33 +57,59 @@ function handleDrop(ev: DragEvent) {
     uploadFiles(files);
 }
 
-function uploadFiles(files: any) {
+async function uploadFiles(files: any) {
     fileUploadForm.parent_id = currentFolderId.value;
     fileUploadForm.files = files;
     fileUploadForm.relative_paths = [...files].map((f) => f.webkitRelativePath);
 
-    fileUploadForm.post(file.store().url, {
-        onSuccess: () => {
-            showSuccessNotification(
-                `${files.length} files have been uploaded.`,
-            );
-        },
-        onError: (errors) => {
-            let message = '';
+    //STEP 1: Checkup
+    const { check } = await checkUpload(files, currentFolderId.value);
 
-            if (Object.keys(errors).length > 0) {
-                message = errors[Object.keys(errors)[0]];
-            } else {
-                message = 'Error during file upload, please try again.';
-            }
+    console.log(check)
 
-            showErrorNotification(message);
-        },
-        onFinish: () => {
-            fileUploadForm.clearErrors();
-            fileUploadForm.reset();
-        },
-    });
+    //STEP 2: Do actual upload
+
+    // fileUploadForm.post(file.store().url, {
+    //     onSuccess: () => {
+    //         showSuccessNotification(
+    //             `${files.length} files have been uploaded.`,
+    //         );
+    //     },
+    //     onError: (errors) => {
+    //         let message = '';
+    //
+    //         if (Object.keys(errors).length > 0) {
+    //             message = errors[Object.keys(errors)[0]];
+    //         } else {
+    //             message = 'Error during file upload, please try again.';
+    //         }
+    //
+    //         showErrorNotification(message);
+    //     },
+    //     onFinish: () => {
+    //         fileUploadForm.clearErrors();
+    //         fileUploadForm.reset();
+    //     },
+    // });
+}
+
+async function checkUpload(files: File[], parentId: number | null) {
+    const payload = {
+        parent_id: parentId,
+        files: files.map((file) => ({
+            name: file.name,
+            size: file.size,
+            relative_path: file.webkitRelativePath || '',
+        })),
+    };
+
+    const { data } = await axios.post('/api/uploads/check', payload);
+
+    if (!data.ok) {
+        throw new Error('Upload is not allowed');
+    }
+
+    return data;
 }
 
 onMounted(() => {
