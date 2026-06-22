@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UploadCheckRequest;
-use Illuminate\Http\Request;
 use App\Services\UploadValidationService;
 
 class UploadCheckController extends Controller
@@ -12,7 +11,7 @@ class UploadCheckController extends Controller
     {
         $result = $service->check(
             user: $request->user(),
-            files: $request->files(),
+            files: $request->validated('files'),
             parent: $request->parent,
         );
 

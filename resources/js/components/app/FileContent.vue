@@ -63,51 +63,52 @@ async function uploadFiles(files: any) {
     fileUploadForm.relative_paths = [...files].map((f) => f.webkitRelativePath);
 
     //STEP 1: Checkup
-    const { check } = await checkUpload(files, currentFolderId.value);
+    const data = await checkUpload(Array.from(files));
 
-    console.log(check)
+    if (!data.ok) {
+        console.log(data)
+        showErrorNotification(data.errors?.[0]?.message ?? data.message);
+        return;
+    }
 
     //STEP 2: Do actual upload
+    fileUploadForm.post(file.store().url, {
+        onSuccess: () => {
+            showSuccessNotification(
+                `${files.length} files have been uploaded.`,
+            );
+        },
+        onError: (errors) => {
+            let message = '';
 
-    // fileUploadForm.post(file.store().url, {
-    //     onSuccess: () => {
-    //         showSuccessNotification(
-    //             `${files.length} files have been uploaded.`,
-    //         );
-    //     },
-    //     onError: (errors) => {
-    //         let message = '';
-    //
-    //         if (Object.keys(errors).length > 0) {
-    //             message = errors[Object.keys(errors)[0]];
-    //         } else {
-    //             message = 'Error during file upload, please try again.';
-    //         }
-    //
-    //         showErrorNotification(message);
-    //     },
-    //     onFinish: () => {
-    //         fileUploadForm.clearErrors();
-    //         fileUploadForm.reset();
-    //     },
-    // });
+            if (Object.keys(errors).length > 0) {
+                message = errors[Object.keys(errors)[0]];
+            } else {
+                message = 'Error during file upload, please try again.';
+            }
+
+            showErrorNotification(message);
+        },
+        onFinish: () => {
+            fileUploadForm.clearErrors();
+            fileUploadForm.reset();
+        },
+    });
 }
 
-async function checkUpload(files: File[], parentId: number | null) {
+async function checkUpload(files: File[]) {
     const payload = {
-        parent_id: parentId,
-        files: files.map((file) => ({
+        parent_id: currentFolderId.value,
+        files: Array.from(files).map((file) => ({
             name: file.name,
             size: file.size,
             relative_path: file.webkitRelativePath || '',
         })),
     };
 
-    const { data } = await axios.post('/api/uploads/check', payload);
-
-    if (!data.ok) {
-        throw new Error('Upload is not allowed');
-    }
+    const { data } = await axios.post('/api/uploads/check', payload, {
+        validateStatus: (status) => status === 200 || status === 422,
+    });
 
     return data;
 }
