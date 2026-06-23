@@ -16,16 +16,6 @@ class ChunkUploadController extends Controller
         string $uploadFileId,
         int $index,
     ): JsonResponse {
-        // Purpose:
-        // Store one chunk for one large file from the upload plan.
-        //
-        // This endpoint should eventually:
-        // 1. Confirm upload_id/upload_file_id/index are expected for this user.
-        // 2. Store the chunk in a temporary location.
-        // 3. Mark this chunk as received.
-        // 4. Return progress data for the frontend queue.
-        //
-        // Do not create the final File model here. That should happen in complete().
         $result = $service->storeChunk(
             user: $request->user(),
             uploadId: $uploadId,

@@ -75,7 +75,6 @@ async function uploadFiles(files: any) {
         (item) => item.relative_path,
     );
     try {
-        //| Step 1:
         //| Check if the upload is possible based on available storage left
         //| Generate a plan for the upload, split larger files from smaller ones
         const plan = await planUpload(uploadItems);
@@ -85,13 +84,7 @@ async function uploadFiles(files: any) {
             return;
         }
 
-        console.log('plan:', plan);
-
-        // Step 2A: upload data.small_file_batches.
-        // Missing:
-        // - Find File objects by client_id.
-        // - Send one FormData request per batch to api.uploads.batches.store.
-        // - Update uploadItems status/progress per file.
+        //| Process any batches
         if (plan.small_file_batches.length > 0) {
             await uploadInBatches({
                 uploadId: plan.upload_id,
@@ -100,12 +93,15 @@ async function uploadFiles(files: any) {
             });
         }
 
-        // Step 2B: upload data.chunked_files.
-        // Missing:
-        // - Slice each large File with file.slice(start, end).
-        // - POST every chunk to api.uploads.chunks.store.
-        // - Call api.uploads.chunks.complete when all chunks are uploaded.
-        // - Update uploadItems status/progress per chunk.
+        // Process any files that need chucking
+        if (plan.chucked_files.length > 0) {
+            await uploadChunkedFiles({
+                uploadId: plan.upload_id,
+                chunkSize: plan.chunk_size,
+                files: plan.chunked_files,
+                uploadItems,
+            });
+        }
 
         // Step 3: refresh the file list/storage UI after all planned uploads finish.
     } catch (error) {
@@ -200,10 +196,74 @@ async function uploadInBatches({
     }
 }
 
-// TODO:
-// Implement this after ChunkUploadController starts storing chunks.
-// Keep this separate from uploadInBatches so the flow stays readable.
-async function uploadChunkedFiles() {}
+type UploadPlanChunkedFile = {
+    client_id: string;
+    upload_file_id: string;
+    name: string;
+    size: number;
+    total_chunks: number;
+};
+async function uploadChunkedFiles({
+    uploadId,
+    chunkSize,
+    files,
+    uploadItems,
+}: {
+    uploadId: string;
+    chunkSize: number;
+    files: UploadPlanChunkedFile[];
+    uploadItems: UploadQueueItem[];
+}) {
+    const itemByClientId = new Map(
+        uploadItems.map((item) => [item.client_id, item]),
+    );
+
+    for (const plannedFile of files) {
+        const item = itemByClientId.get(plannedFile.client_id);
+
+        if (!item) {
+            throw new Error(`Upload item not found: ${plannedFile.client_id}`);
+        }
+
+        item.status = 'uploading';
+
+        for (let index = 0; index < plannedFile.total_chunks; index++) {
+            const start = index * chunkSize;
+            const end = Math.min(start + chunkSize, item.file.size);
+            const chunk = item.file.slice(start, end);
+
+            const form = new FormData();
+            form.append('chunk', chunk, `${item.name}.part.${index}`);
+
+            const { data } = await axios.post(
+                `/api/uploads/${uploadId}/files/${plannedFile.upload_file_id}/chunks/${index}`,
+                form,
+            );
+
+            if (!data.ok) {
+                throw new Error(data.message ?? 'Chunk upload failed.');
+            }
+
+            item.progress = Math.round(
+                ((index + 1) / plannedFile.total_chunks) * 100,
+            );
+        }
+
+        const { data } = await axios.post(
+            `/api/uploads/${uploadId}/files/${plannedFile.upload_file_id}/complete`,
+            {
+                parent_id: currentFolderId.value,
+            },
+        );
+
+        if (!data.ok) {
+            throw new Error(data.message ?? 'Chunk completion failed.');
+        }
+
+        item.status = 'done';
+        item.progress = 100;
+    }
+}
 
 function handleError(error: any) {
     if (axios.isAxiosError(error) && error.response) {

@@ -3,12 +3,13 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 final class UploadPlanService
 {
     private const int|float CHUNK_THRESHOLD = 100 * 1024 * 1024;
     private const int|float CHUNK_SIZE = 16 * 1024 * 1024;
-    private const int MAX_BATCH_FILES = 20;
+    private const int MAX_BATCH_FILES = 10;
     private const int|float MAX_BATCH_BYTES = 100 * 1024 * 1024;
 
     public function makePlan(User $user, array $files, ?int $parentId): array
@@ -36,7 +37,7 @@ final class UploadPlanService
             ->filter(fn ($file) => (int) $file['size'] >= self::CHUNK_THRESHOLD)
             ->values();
 
-        return [
+        $plan = [
             'ok' => true,
             'upload_id' => (string) str()->uuid(),
             'threshold_bytes' => self::CHUNK_THRESHOLD,
@@ -49,9 +50,14 @@ final class UploadPlanService
                 'name' => $file['name'],
                 'size' => (int) $file['size'],
                 'total_chunks' => (int) ceil($file['size'] / self::CHUNK_SIZE),
+                'relative_path' => $file['relative_path'] ?? null,
             ])->values(),
             'errors' => [],
         ];
+
+        Cache::put("upload-plan:{$user->id}:{$plan['upload_id']}", $plan, now()->addHours(2));
+
+        return $plan;
     }
 
     private function makeSmallFileBatches($files): array
