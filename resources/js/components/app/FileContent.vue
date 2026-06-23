@@ -9,13 +9,22 @@ import {
     emitter,
     FILE_UPLOAD_STARTED,
     showErrorNotification,
-    showSuccessNotification,
 } from '@/composables/event-bus';
-import file from '@/routes/file';
 
 type Props = {
     variant?: 'header' | 'sidebar';
     class?: string;
+};
+
+type UploadQueueItem = {
+    client_id: string;
+    file: File;
+    name: string;
+    size: number;
+    relative_path: string;
+    status: 'queued' | 'planning' | 'uploading' | 'done' | 'failed';
+    progress: number;
+    error?: string;
 };
 
 const dragOver = ref(false);
@@ -58,59 +67,156 @@ function handleDrop(ev: DragEvent) {
 }
 
 async function uploadFiles(files: any) {
+    const uploadItems = createUploadQueue(files);
+
     fileUploadForm.parent_id = currentFolderId.value;
-    fileUploadForm.files = files;
-    fileUploadForm.relative_paths = [...files].map((f) => f.webkitRelativePath);
+    fileUploadForm.files = uploadItems.map((item) => item.file);
+    fileUploadForm.relative_paths = uploadItems.map(
+        (item) => item.relative_path,
+    );
+    try {
+        //| Step 1:
+        //| Check if the upload is possible based on available storage left
+        //| Generate a plan for the upload, split larger files from smaller ones
+        const plan = await planUpload(uploadItems);
 
-    //STEP 1: Checkup
-    const data = await checkUpload(Array.from(files));
+        if (!plan.ok) {
+            showErrorNotification(plan.errors?.[0]?.message ?? plan.message);
+            return;
+        }
 
-    if (!data.ok) {
-        console.log(data);
-        showErrorNotification(data.errors?.[0]?.message ?? data.message);
-        return;
+        console.log('plan:', plan);
+
+        // Step 2A: upload data.small_file_batches.
+        // Missing:
+        // - Find File objects by client_id.
+        // - Send one FormData request per batch to api.uploads.batches.store.
+        // - Update uploadItems status/progress per file.
+        if (plan.small_file_batches.length > 0) {
+            await uploadInBatches({
+                uploadId: plan.upload_id,
+                batches: plan.small_file_batches,
+                uploadItems,
+            });
+        }
+
+        // Step 2B: upload data.chunked_files.
+        // Missing:
+        // - Slice each large File with file.slice(start, end).
+        // - POST every chunk to api.uploads.chunks.store.
+        // - Call api.uploads.chunks.complete when all chunks are uploaded.
+        // - Update uploadItems status/progress per chunk.
+
+        // Step 3: refresh the file list/storage UI after all planned uploads finish.
+    } catch (error) {
+        handleError(error);
     }
-
-    //STEP 2: Do actual upload
-    fileUploadForm.post(file.store().url, {
-        onSuccess: () => {
-            showSuccessNotification(
-                `${files.length} files have been uploaded.`,
-            );
-        },
-        onError: (errors) => {
-            let message = '';
-
-            if (Object.keys(errors).length > 0) {
-                message = errors[Object.keys(errors)[0]];
-            } else {
-                message = 'Error during file upload, please try again.';
-            }
-
-            showErrorNotification(message);
-        },
-        onFinish: () => {
-            fileUploadForm.clearErrors();
-            fileUploadForm.reset();
-        },
-    });
 }
 
-async function checkUpload(files: File[]) {
-    const payload = {
-        parent_id: currentFolderId.value,
-        files: Array.from(files).map((file) => ({
-            name: file.name,
-            size: file.size,
-            relative_path: file.webkitRelativePath || '',
-        })),
-    };
+function createUploadQueue(files: FileList | File[]): UploadQueueItem[] {
+    return Array.from(files).map((file) => ({
+        client_id: crypto.randomUUID(),
+        file,
+        name: file.name,
+        size: file.size,
+        relative_path: file.webkitRelativePath || '',
+        status: 'queued',
+        progress: 0,
+    }));
+}
 
-    const { data } = await axios.post('/api/uploads/check', payload, {
-        validateStatus: (status) => status === 200 || status === 422,
+async function planUpload(uploadItems: UploadQueueItem[]) {
+    const { data } = await axios.post('/api/uploads/plan', {
+        parent_id: currentFolderId.value,
+        files: uploadItems.map(({ client_id, name, size, relative_path }) => ({
+            client_id,
+            name,
+            size,
+            relative_path,
+        })),
     });
 
     return data;
+}
+
+type UploadPlanBatch = {
+    batch_id: string;
+    files: string[]; // client_ids
+};
+
+async function uploadInBatches({
+    uploadId,
+    batches,
+    uploadItems,
+}: {
+    uploadId: string;
+    batches: UploadPlanBatch[];
+    uploadItems: UploadQueueItem[];
+}) {
+    const itemByClientId = new Map(
+        uploadItems.map((item) => [item.client_id, item]),
+    );
+
+    for (const batch of batches) {
+        const form = new FormData();
+
+        if (currentFolderId.value !== null) {
+            form.append('parent_id', String(currentFolderId.value));
+        }
+
+        for (const clientId of batch.files) {
+            const item = itemByClientId.get(clientId);
+
+            if (!item) {
+                throw new Error(
+                    `Upload item not found for client_id: ${clientId}`,
+                );
+            }
+
+            item.status = 'uploading';
+
+            form.append('files[]', item.file);
+            form.append('client_ids[]', item.client_id);
+            form.append('relative_paths[]', item.relative_path);
+        }
+
+        const { data } = await axios.post(
+            `/api/uploads/${uploadId}/batches/${batch.batch_id}`,
+            form,
+        );
+
+        if (!data.ok) {
+            throw new Error(data.message ?? 'Batch upload failed.');
+        }
+
+        for (const clientId of batch.files) {
+            const item = itemByClientId.get(clientId);
+
+            if (item) {
+                item.status = 'done';
+                item.progress = 100;
+            }
+        }
+    }
+}
+
+// TODO:
+// Implement this after ChunkUploadController starts storing chunks.
+// Keep this separate from uploadInBatches so the flow stays readable.
+async function uploadChunkedFiles() {}
+
+function handleError(error: any) {
+    if (axios.isAxiosError(error) && error.response) {
+        const data = error.response.data;
+
+        showErrorNotification(
+            data.errors?.[0]?.message ??
+                data.message ??
+                'Upload is not allowed.',
+        );
+
+        return;
+    }
 }
 
 onMounted(() => {

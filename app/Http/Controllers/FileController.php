@@ -9,6 +9,7 @@ use App\Http\Requests\TrashFilesRequest;
 use App\Http\Resources\FileResource;
 use App\Models\File;
 use App\Services\StorageUserService;
+use App\Services\StoreUploadedFile;
 use App\Services\ZipCreatorService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,8 +22,10 @@ class FileController extends Controller
 {
     protected StorageUserService $storageUserService;
 
-    public function __construct(StorageUserService $storageUserService)
-    {
+    public function __construct(
+        StorageUserService $storageUserService,
+        private readonly StoreUploadedFile $storeUploadedFile,
+    ) {
         $this->storageUserService = $storageUserService;
     }
 
@@ -116,7 +119,7 @@ class FileController extends Controller
         return redirect()->back();
     }
 
-    public function store(StoreFileRequest $request, StorageUserService $storageService)
+    public function store(StoreFileRequest $request)
     {
         $totalUploadedBytes = 0;
 
@@ -138,7 +141,7 @@ class FileController extends Controller
             }
         }
 
-        $storageService->addUsage($user, $totalUploadedBytes);
+        $this->storageUserService->addUsage($user, $totalUploadedBytes);
     }
 
     private function getRoot()
@@ -168,22 +171,10 @@ class FileController extends Controller
 
     private function saveFile($file, $user, $parent): int
     {
-
-        $size = (int) $file->getSize();
-
         /* @var UploadedFile $file */
-        $path = $file->store('/files'.$user->id);
-
-        $model = new File;
-        $model->is_folder = false;
-        $model->storage_path = $path;
-        $model->name = $file->getClientOriginalName();
-        $model->mime = $file->getClientMimeType();
-        $model->size = $file->getSize();
-
-        $parent->appendNode($model);
-
-        return $size;
+        return (int) $this->storeUploadedFile
+            ->handle($file, $user, $parent)
+            ->size;
     }
 
     public function destroy(FilesActionsRequest $request): RedirectResponse
