@@ -104,7 +104,7 @@ class UploadBatchService
             ->firstOrFail();
     }
 
-    private function resolveTargetParentFromRelativePath(
+    public function resolveTargetParentFromRelativePath(
         User $user,
         File $rootParent,
         ?string $relativePath,

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\File;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -9,6 +10,12 @@ use Illuminate\Support\Facades\Storage;
 
 class ChunkUploadService
 {
+    public function __construct(
+        private readonly StoreUploadedFile $storeUploadedFile,
+        private readonly StorageUserService $storageUserService,
+        private readonly UploadBatchService $UploadBatchService,
+    ) {}
+
     public function storeChunk(
         User $user,
         string $uploadId,
@@ -88,21 +95,122 @@ class ChunkUploadService
         string $uploadFileId,
         ?int $parentId,
     ): array {
-        // TODO:
-        // - Load/validate the persisted upload plan.
-        // - Confirm all expected chunks exist.
-        // - Merge chunks into the final storage location.
-        // - Verify final file size equals planned size.
-        // - Create the File model in the selected parent folder.
-        // - Add storage usage and clear caches.
-        // - Delete temporary chunks.
+        @set_time_limit(300);
+
+        $plan = $this->loadPlan($user, $uploadId);
+
+        if (! $plan) {
+            return $this->failed(
+                uploadId: $uploadId,
+                uploadFileId: $uploadFileId,
+                code: 'upload_plan_not_found',
+                message: 'Upload plan was not found.',
+            );
+        }
+
+        $plannedFile = $this->findPlannedFile($plan, $uploadFileId);
+
+        if (! $plannedFile) {
+            return $this->failed(
+                uploadId: $uploadId,
+                uploadFileId: $uploadFileId,
+                code: 'upload_file_not_found',
+                message: 'Upload file was not found.',
+            );
+        }
+
+        $totalChunks = (int) $plannedFile['total_chunks'];
+
+        for ($index = 0; $index < $totalChunks; $index++) {
+            if (! Storage::exists($this->chunkPath($user, $uploadId, $uploadFileId, $index))) {
+                return $this->failed(
+                    uploadId: $uploadId,
+                    uploadFileId: $uploadFileId,
+                    code: 'missing_chunks',
+                    message: 'Not all chunks have been uploaded yet or are not found',
+                );
+            }
+        }
+
+        $localMergedPath = storage_path("app/uploads/tmp/{$user->id}/{$uploadId}/{$uploadFileId}/merged");
+
+        if (! is_dir(dirname($localMergedPath))) {
+            mkdir(dirname($localMergedPath), 0775, true);
+        }
+
+        $target = fopen($localMergedPath, 'wb');
+
+        for ($index = 0; $index < $totalChunks; $index++) {
+            $chunkPath = $this->chunkPath($user, $uploadId, $uploadFileId, $index);
+
+            $source = Storage::readStream($chunkPath);
+
+            if ($source === false) {
+                fclose($target);
+
+                return $this->failed(
+                    uploadId: $uploadId,
+                    uploadFileId: $uploadFileId,
+                    code: 'chunk_stream_failed',
+                    message: 'Could not read uploaded chunk.',
+                );
+            }
+
+            stream_copy_to_stream($source, $target);
+            fclose($source);
+        }
+
+        fclose($target);
+
+        if (filesize($localMergedPath) !== (int) $plannedFile['size']) {
+            return $this->failed(
+                uploadId: $uploadId,
+                uploadFileId: $uploadFileId,
+                code: 'invalid_file_size',
+                message: 'Merged file size does not match the upload plan.'
+            );
+        }
+
+        $parent = $this->resolveParent($user, $parentId);
+
+        $targetParent = $this->UploadBatchService->resolveTargetParentFromRelativePath(
+            user: $user,
+            rootParent: $parent,
+            relativePath: $plannedFile['relative_path'] ?? null,
+        );
+
+        $uploadedFile = new UploadedFile(
+            $localMergedPath,
+            $plannedFile['name'],
+            null,
+            null,
+            true,
+        );
+
+        $model = $this->storeUploadedFile->handle(
+            file: $uploadedFile,
+            user: $user,
+            parent: $targetParent,
+        );
+
+        $this->storageUserService->addUsage($user, (int) $model->size);
+
+        Storage::deleteDirectory(
+            $this->chunkDirectory($user, $uploadId, $uploadFileId),
+        );
+
+        @unlink($localMergedPath);
 
         return [
-            'ok' => false,
-            'code' => 'not_implemented',
-            'message' => 'Chunk completion endpoint is scaffolded but not implemented yet.',
+            'ok' => true,
             'upload_id' => $uploadId,
             'upload_file_id' => $uploadFileId,
+            'file' => [
+                'id' => $model->id,
+                'name' => $model->name,
+                'size' => $model->size,
+                'status' => 'done',
+            ],
         ];
     }
 
@@ -176,5 +284,21 @@ class ChunkUploadService
             'upload_id' => $uploadId,
             'upload_file_id' => $uploadFileId,
         ];
+    }
+
+    private function resolveParent(User $user, ?int $parentId): File
+    {
+        if ($parentId) {
+            return File::query()
+                ->where('id', $parentId)
+                ->where('created_by', $user->id)
+                ->where('is_folder', true)
+                ->firstOrFail();
+        }
+
+        return File::query()
+            ->where('created_by', $user->id)
+            ->whereIsRoot()
+            ->firstOrFail();
     }
 }

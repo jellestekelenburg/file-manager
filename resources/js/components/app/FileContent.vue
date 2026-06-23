@@ -94,7 +94,7 @@ async function uploadFiles(files: any) {
         }
 
         // Process any files that need chucking
-        if (plan.chucked_files.length > 0) {
+        if (plan.chunked_files.length > 0) {
             await uploadChunkedFiles({
                 uploadId: plan.upload_id,
                 chunkSize: plan.chunk_size,
@@ -102,6 +102,8 @@ async function uploadFiles(files: any) {
                 uploadItems,
             });
         }
+
+        console.log('ben er doorheen')
 
         // Step 3: refresh the file list/storage UI after all planned uploads finish.
     } catch (error) {

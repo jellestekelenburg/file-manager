@@ -33,15 +33,6 @@ class ChunkUploadController extends Controller
         string $uploadId,
         string $uploadFileId,
     ): JsonResponse {
-        // Purpose:
-        // Merge all received chunks into one final file.
-        //
-        // This endpoint should eventually:
-        // 1. Confirm all chunks for this file are present.
-        // 2. Merge chunks in index order.
-        // 3. Verify final byte size against the planned file size.
-        // 4. Store final file and create the File model.
-        // 5. Clean temporary chunk files.
         $result = $service->complete(
             user: $request->user(),
             uploadId: $uploadId,
