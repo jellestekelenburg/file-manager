@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\FileController;
-use App\Http\Controllers\ChunkUploadController;
-use App\Http\Controllers\UploadBatchController;
-use App\Http\Controllers\UploadPlanController;
+use App\Http\Controllers\Upload\UploadBatchController;
+use App\Http\Controllers\Upload\UploadMultipartController;
+use App\Http\Controllers\Upload\UploadPlanController;
 use App\Http\Controllers\UserStorage;
 use Illuminate\Support\Facades\Route;
 
@@ -20,11 +20,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/uploads/{uploadId}/batches/{batchId}', [UploadBatchController::class, 'store'])
         ->name('api.uploads.batches.store');
 
-    // Step 2B: upload and complete planned large-file chunks.
-    Route::post('/api/uploads/{uploadId}/files/{uploadFileId}/chunks/{index}', [ChunkUploadController::class, 'store'])
-        ->name('api.uploads.chunks.store');
-    Route::post('/api/uploads/{uploadId}/files/{uploadFileId}/complete', [ChunkUploadController::class, 'complete'])
-        ->name('api.uploads.chunks.complete');
+    // Step 2B: upload files with S3 multipart
+    Route::post('/api/uploads/{uploadId}/multipart/{uploadFileId}/initiate', [UploadMultipartController::class, 'initiate'])
+        ->name('api.uploads.multipart.initiate');
+
+    Route::post('/api/uploads/{uploadId}/multipart/{uploadFileId}/parts/sign', [UploadMultipartController::class, 'sign'])
+        ->name('api.uploads.multipart.sign');
+
+    Route::post('/api/uploads/{uploadId}/multipart/{uploadFileId}/complete', [UploadMultipartController::class, 'complete'])
+        ->name('api.uploads.multipart.complete');
+
+    Route::post('/api/uploads/{uploadId}/multipart/{uploadFileId}/abort', [UploadMultipartController::class, 'abort'])
+        ->name('api.uploads.multipart.abort');
 });
 
 Route::controller(FileController::class)

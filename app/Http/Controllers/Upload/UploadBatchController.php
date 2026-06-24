@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Upload;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUploadBatchRequest;
 use App\Services\UploadBatchService;
 use Illuminate\Http\JsonResponse;

@@ -89,13 +89,13 @@ async function uploadFiles(files: any) {
             await uploadInBatches({
                 uploadId: plan.upload_id,
                 batches: plan.small_file_batches,
-                uploadItems,
-            });
+                uploadItems: uploadItems
+            })
         }
 
         // Process any files that need chucking
         if (plan.chunked_files.length > 0) {
-            await uploadChunkedFiles({
+            await uploadS3Files({
                 uploadId: plan.upload_id,
                 chunkSize: plan.chunk_size,
                 files: plan.chunked_files,
@@ -103,7 +103,7 @@ async function uploadFiles(files: any) {
             });
         }
 
-        console.log('ben er doorheen')
+        console.log('ben er doorheen');
 
         // Step 3: refresh the file list/storage UI after all planned uploads finish.
     } catch (error) {
@@ -137,6 +137,28 @@ async function planUpload(uploadItems: UploadQueueItem[]) {
     return data;
 }
 
+async function runWithConcurrency<T>(
+    items: T[],
+    limit: number,
+    worker: (item: T) => Promise<void>,
+) {
+    let nextIndex = 0;
+
+    const workers = Array.from(
+        { length: Math.min(limit, items.length) },
+        async () => {
+            while (nextIndex < items.length) {
+                const item = items[nextIndex];
+                nextIndex++;
+
+                await worker(item);
+            }
+        },
+    );
+
+    await Promise.all(workers);
+}
+
 type UploadPlanBatch = {
     batch_id: string;
     files: string[]; // client_ids
@@ -155,45 +177,59 @@ async function uploadInBatches({
         uploadItems.map((item) => [item.client_id, item]),
     );
 
-    for (const batch of batches) {
-        const form = new FormData();
+    await runWithConcurrency(batches, 3, async (batch) => {
+        await uploadBatch({
+            uploadId,
+            batch,
+            itemByClientId,
+        });
+    });
+}
 
-        if (currentFolderId.value !== null) {
-            form.append('parent_id', String(currentFolderId.value));
+async function uploadBatch({
+    uploadId,
+    batch,
+    itemByClientId,
+}: {
+    uploadId: string;
+    batch: UploadPlanBatch;
+    itemByClientId: Map<string, UploadQueueItem>;
+}) {
+    const form = new FormData();
+
+    if (currentFolderId.value !== null) {
+        form.append('parent_id', String(currentFolderId.value));
+    }
+
+    for (const clientId of batch.files) {
+        const item = itemByClientId.get(clientId);
+
+        if (!item) {
+            throw new Error(`Upload item not found for client_id: ${clientId}`);
         }
 
-        for (const clientId of batch.files) {
-            const item = itemByClientId.get(clientId);
+        item.status = 'uploading';
 
-            if (!item) {
-                throw new Error(
-                    `Upload item not found for client_id: ${clientId}`,
-                );
-            }
+        form.append('files[]', item.file);
+        form.append('client_ids[]', item.client_id);
+        form.append('relative_paths[]', item.relative_path);
+    }
 
-            item.status = 'uploading';
+    const { data } = await axios.post(
+        `/api/uploads/${uploadId}/batches/${batch.batch_id}`,
+        form,
+    );
 
-            form.append('files[]', item.file);
-            form.append('client_ids[]', item.client_id);
-            form.append('relative_paths[]', item.relative_path);
-        }
+    if (!data.ok) {
+        throw new Error(data.message ?? 'Batch upload failed.');
+    }
 
-        const { data } = await axios.post(
-            `/api/uploads/${uploadId}/batches/${batch.batch_id}`,
-            form,
-        );
+    for (const clientId of batch.files) {
+        const item = itemByClientId.get(clientId);
 
-        if (!data.ok) {
-            throw new Error(data.message ?? 'Batch upload failed.');
-        }
-
-        for (const clientId of batch.files) {
-            const item = itemByClientId.get(clientId);
-
-            if (item) {
-                item.status = 'done';
-                item.progress = 100;
-            }
+        if (item) {
+            item.status = 'done';
+            item.progress = 100;
         }
     }
 }
@@ -205,7 +241,7 @@ type UploadPlanChunkedFile = {
     size: number;
     total_chunks: number;
 };
-async function uploadChunkedFiles({
+async function uploadS3Files({
     uploadId,
     chunkSize,
     files,
@@ -220,51 +256,7 @@ async function uploadChunkedFiles({
         uploadItems.map((item) => [item.client_id, item]),
     );
 
-    for (const plannedFile of files) {
-        const item = itemByClientId.get(plannedFile.client_id);
-
-        if (!item) {
-            throw new Error(`Upload item not found: ${plannedFile.client_id}`);
-        }
-
-        item.status = 'uploading';
-
-        for (let index = 0; index < plannedFile.total_chunks; index++) {
-            const start = index * chunkSize;
-            const end = Math.min(start + chunkSize, item.file.size);
-            const chunk = item.file.slice(start, end);
-
-            const form = new FormData();
-            form.append('chunk', chunk, `${item.name}.part.${index}`);
-
-            const { data } = await axios.post(
-                `/api/uploads/${uploadId}/files/${plannedFile.upload_file_id}/chunks/${index}`,
-                form,
-            );
-
-            if (!data.ok) {
-                throw new Error(data.message ?? 'Chunk upload failed.');
-            }
-
-            item.progress = Math.round(
-                ((index + 1) / plannedFile.total_chunks) * 100,
-            );
-        }
-
-        const { data } = await axios.post(
-            `/api/uploads/${uploadId}/files/${plannedFile.upload_file_id}/complete`,
-            {
-                parent_id: currentFolderId.value,
-            },
-        );
-
-        if (!data.ok) {
-            throw new Error(data.message ?? 'Chunk completion failed.');
-        }
-
-        item.status = 'done';
-        item.progress = 100;
-    }
+    console.log(uploadId, chunkSize, files, uploadItems, itemByClientId)
 }
 
 function handleError(error: any) {

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Upload;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\UploadPlanRequest;
 use App\Services\UploadPlanService;
 
